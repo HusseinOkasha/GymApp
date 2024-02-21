@@ -2,7 +2,6 @@ package GymApp.controller;
 
 
 import GymApp.dao.AccountRepository;
-import GymApp.dto.AccountDto;
 import GymApp.entity.Account;
 import GymApp.security.EncryptionService;
 import org.springframework.beans.factory.annotation.Autowired;

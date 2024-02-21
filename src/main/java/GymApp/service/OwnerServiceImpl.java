@@ -35,6 +35,10 @@ public class OwnerServiceImpl implements OwnerService{
         return ownerRepository.findByAccount_EmailOrAccount_PhoneNumber(email, phoneNumber);
     }
 
+    public void deleteByAccount_EmailOrAccount_phoneNumber(String email, String phoneNumber){
+        ownerRepository.deleteByAccount_EmailOrAccount_phoneNumber(email, phoneNumber);
+    }
+
     @Override
     public Optional<Owner> save(Owner owner) {
         return Optional.of(ownerRepository.save(owner));

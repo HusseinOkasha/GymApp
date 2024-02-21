@@ -13,8 +13,11 @@ public class Owner {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "account_id", referencedColumnName = "id", nullable = false)
     private Account account;
+    public Owner (){
 
-    public Owner() {
+    }
+    public Owner(Account account) {
+        this.account = account;
     }
 
     public long getId() {

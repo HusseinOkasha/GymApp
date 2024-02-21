@@ -25,14 +25,14 @@ public class TokenService {
         this.accountService = accountService;
     }
 
-    public String generateToken(Authentication authentication, AccountType accountType) {
+    public String generateToken(String name, AccountType accountType) {
         Instant now = Instant.now();
         String scope = accountType.toString();
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
-                .subject(authentication.getName())
+                .subject(name)
                 .claim("scope", scope)
                 .build();
         return this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
