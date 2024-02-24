@@ -126,9 +126,9 @@ public class OwnerAccountManagerController {
     // Delete owner account (an owner can delete his own account.)
     @DeleteMapping("/owner-account-manager")
     @PreAuthorize("hasAuthority('SCOPE_OWNER')")
-    public ResponseEntity deleteOwnerAccount(Authentication authentication){
+    public ResponseEntity deleteOwnerAccount(Authentication authentication) {
         // extract email / phone number from the authentication object.
-        String name  = authentication.getName();
+        String name = authentication.getName();
 
         ownerService.deleteByAccount_EmailOrAccount_phoneNumber(name, name);
 

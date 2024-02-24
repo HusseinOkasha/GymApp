@@ -52,9 +52,11 @@ public class ClientDetails implements CustomUserDetails {
         return false;
     }
 
-
     @Override
     public AccountType getAccountType(String accountType) {
         return AccountType.CLIENT;
+    }
+    public long getAccountId(){
+        return client.getAccount().getId();
     }
 }
