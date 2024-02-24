@@ -24,7 +24,7 @@ public class JpaCoachDetailsService implements UserDetailsService {
     private CoachService coachService;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public CoachDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Supplier<UsernameNotFoundException> s =
                 () -> new UsernameNotFoundException("Problem during authentication!");
         Account account = accountService.findByEmailOrPhoneNumber(username, username).orElseThrow(s);

@@ -28,7 +28,7 @@ public class JpaOwnerDetailsService implements UserDetailsService {
 
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public OwnerDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Supplier<UsernameNotFoundException> s =
                 () -> new UsernameNotFoundException("Problem during authentication!");
         Account account = accountService.findByEmailOrPhoneNumber(username, username).orElseThrow(s);

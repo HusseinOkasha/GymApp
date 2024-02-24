@@ -1,6 +1,7 @@
 package GymApp.security.authenticationProvider;
 
 
+import GymApp.security.userDetails.CoachDetails;
 import GymApp.security.userDetailsService.JpaCoachDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -31,16 +32,17 @@ public class CoachAuthenticationProviderService implements AuthenticationProvide
         String emailOrPhoneNumber = authentication.getName();
         String password = authentication.getCredentials().toString();
 
-        UserDetails userDetails =  coachDetailsService.loadUserByUsername(emailOrPhoneNumber);
+        CoachDetails coachDetails =  coachDetailsService.loadUserByUsername(emailOrPhoneNumber);
 
-        return checkPassword(userDetails, password, bCryptPasswordEncoder);
+        return checkPassword(coachDetails, password, bCryptPasswordEncoder);
 
 
     }
-    private Authentication checkPassword(UserDetails userDetails, String rawPassword, PasswordEncoder encoder) {
+    private Authentication checkPassword(CoachDetails coachDetails, String rawPassword, PasswordEncoder encoder) {
 
-        if(encoder.matches(rawPassword, userDetails.getPassword())){
-            return new UsernamePasswordAuthenticationToken(userDetails.getUsername(), userDetails.getPassword(), userDetails.getAuthorities());
+        if(encoder.matches(rawPassword, coachDetails.getPassword())){
+            return new UsernamePasswordAuthenticationToken(coachDetails.getAccountId(), coachDetails.getPassword(),
+                    coachDetails.getAuthorities());
         }
         else{
             throw new BadCredentialsException("Bad Credentials");

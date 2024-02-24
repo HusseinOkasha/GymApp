@@ -1,6 +1,7 @@
 package GymApp.security.authenticationProvider;
 
 
+import GymApp.security.userDetails.OwnerDetails;
 import GymApp.security.userDetailsService.JpaOwnerDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -30,17 +31,17 @@ public class OwnerAuthenticationProviderService  implements AuthenticationProvid
         String emailOrPhoneNumber = authentication.getName();
         String password = authentication.getCredentials().toString();
 
-        UserDetails userDetails =  ownerDetailsService.loadUserByUsername(emailOrPhoneNumber);
+        OwnerDetails ownerDetails =  ownerDetailsService.loadUserByUsername(emailOrPhoneNumber);
 
-        return checkPassword(userDetails, password, bCryptPasswordEncoder);
+        return checkPassword(ownerDetails, password, bCryptPasswordEncoder);
 
 
     }
-    private Authentication checkPassword(UserDetails userDetails, String rawPassword, PasswordEncoder encoder) {
+    private Authentication checkPassword(OwnerDetails ownerDetails, String rawPassword, PasswordEncoder encoder) {
 
-        if(encoder.matches(rawPassword, userDetails.getPassword())){
-            return new UsernamePasswordAuthenticationToken(userDetails.getUsername(), userDetails.getPassword(),
-                    userDetails.getAuthorities());
+        if(encoder.matches(rawPassword, ownerDetails.getPassword())){
+            return new UsernamePasswordAuthenticationToken(ownerDetails.getAccountId(), ownerDetails.getPassword(),
+                    ownerDetails.getAuthorities());
         }
         else{
             throw new BadCredentialsException("Bad Credentials");
