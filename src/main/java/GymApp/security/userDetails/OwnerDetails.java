@@ -56,4 +56,7 @@ public class OwnerDetails implements CustomUserDetails {
     public AccountType getAccountType(String accountType) {
         return AccountType.OWNER;
     }
+    public long getAccountId(){
+        return owner.getAccount().getId();
+    }
 }

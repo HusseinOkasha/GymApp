@@ -1,6 +1,7 @@
 package GymApp.security.authenticationProvider;
 
 
+import GymApp.security.userDetails.ClientDetails;
 import GymApp.security.userDetailsService.JpaClientDetailsService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,16 +32,15 @@ public class ClientAuthenticationProviderService implements AuthenticationProvid
         String emailOrPhoneNumber = authentication.getName();
         String password = authentication.getCredentials().toString();
 
-        UserDetails userDetails =  clientDetailsService.loadUserByUsername(emailOrPhoneNumber);
+        ClientDetails clientDetails =  clientDetailsService.loadUserByUsername(emailOrPhoneNumber);
 
-        return checkPassword(userDetails, password, bCryptPasswordEncoder);
-
-
+        return checkPassword(clientDetails, password, bCryptPasswordEncoder);
     }
-    private Authentication checkPassword(UserDetails userDetails, String rawPassword, PasswordEncoder encoder) {
+    private Authentication checkPassword(ClientDetails clientDetails, String rawPassword, PasswordEncoder encoder) {
 
-        if(encoder.matches(rawPassword, userDetails.getPassword())){
-            return new UsernamePasswordAuthenticationToken(userDetails.getUsername(), userDetails.getPassword(), userDetails.getAuthorities());
+        if(encoder.matches(rawPassword, clientDetails.getPassword())){
+            return new UsernamePasswordAuthenticationToken(clientDetails.getAccountId(), clientDetails.getPassword(),
+                    clientDetails.getAuthorities());
         }
         else{
             throw new BadCredentialsException("Bad Credentials");

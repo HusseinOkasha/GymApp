@@ -55,4 +55,7 @@ public class CoachDetails implements CustomUserDetails {
     public AccountType getAccountType(String accountType) {
         return AccountType.COACH;
     }
+    public long getAccountId(){
+        return coach.getAccount().getId();
+    }
 }

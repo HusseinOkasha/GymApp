@@ -24,14 +24,14 @@ public class LoginController {
     }
     @PostMapping("/owner")
     public String ownerLogin(Authentication authentication) {
-        return tokenService.generateToken(authentication, AccountType.OWNER);
+        return tokenService.generateToken(authentication.getName(), AccountType.OWNER);
     }
     @PostMapping("/client")
     public String clientLogin(Authentication authentication) {
-        return tokenService.generateToken(authentication, AccountType.CLIENT);
+        return tokenService.generateToken(authentication.getName(), AccountType.CLIENT);
     }
     @PostMapping("/coach")
     public String coachLogin(Authentication authentication) {
-        return tokenService.generateToken(authentication, AccountType.COACH);
+        return tokenService.generateToken(authentication.getName(), AccountType.COACH);
     }
 }
