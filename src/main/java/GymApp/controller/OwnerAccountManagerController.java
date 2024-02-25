@@ -2,6 +2,7 @@ package GymApp.controller;
 
 
 import GymApp.dto.AccountProfileDto;
+import GymApp.dto.ChangePasswordDto;
 import GymApp.dto.CreateAccountDto;
 import GymApp.entity.Account;
 import GymApp.entity.Owner;
@@ -123,7 +124,32 @@ public class OwnerAccountManagerController {
         return tokenService.generateToken(dbAccount.getEmail(), AccountType.OWNER);
     }
 
-    // Delete owner account (an owner can delete his own account.)
+    // change owner account password
+    @PutMapping("/owner-account-manager/password")
+    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
+    @Validated
+    public void changeOwnerAccountPassword(@RequestBody @Valid ChangePasswordDto changePasswordDto,
+                                           Authentication authentication){
+        // extract the owner's identifier from the authentication object
+        // the identifier is the database id of the account.
+        long identifier = Long.parseLong(authentication.getName());
+
+        // get the owner's account from the database
+        Account dbAccount = accountService.findById(identifier).orElseThrow(()-> new AccessDeniedException(""));
+
+        // encrypt the new password
+        String newPassword = changePasswordDto.password();
+        String encryptedPassword = encryptionService.encryptString(newPassword);
+
+        // change the account password with the new encrypted password.
+        dbAccount.setPassword(encryptedPassword);
+
+        // save the changes to the database
+        accountService.save(dbAccount);
+    }
+
+
+    // delete owner account (an owner can delete his own account.)
     @DeleteMapping("/owner-account-manager")
     @PreAuthorize("hasAuthority('SCOPE_OWNER')")
     public ResponseEntity deleteOwnerAccount(Authentication authentication) {
@@ -134,5 +160,6 @@ public class OwnerAccountManagerController {
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
 
 }
