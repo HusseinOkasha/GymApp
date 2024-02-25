@@ -10,6 +10,7 @@ import GymApp.enums.AccountType;
 import GymApp.exception.AccountCreationFailureException;
 
 import GymApp.exception.AccountNotFoundException;
+import GymApp.exception.UpdateAccountFailureException;
 import GymApp.security.EncryptionService;
 import GymApp.service.AccountService;
 import GymApp.service.OwnerService;
@@ -60,10 +61,10 @@ public class OwnerAccountManagerController {
     @GetMapping("/owner-account-manager")
     @PreAuthorize("hasAuthority('SCOPE_OWNER')")
     public AccountProfileDto getOwner(Authentication authentication) throws AccountNotFoundException {
-        String name = authentication.getName();
+        long identifier = Long.parseLong(authentication.getName());
         return AccountEntityAndDtoConverters
                 .convertAccountEntityToAccountProfileDto(
-                        ownerService.findByEmailOrPhoneNumber(name, name)
+                        ownerService.findByAccountId(identifier)
                                 .orElseThrow(() -> new AccountNotFoundException("Account not found")).getAccount()
                 );
     }
@@ -101,14 +102,14 @@ public class OwnerAccountManagerController {
     @PutMapping("/owner-account-manager")
     @PreAuthorize("hasAuthority('SCOPE_OWNER')")
     @Validated
-    public String updateOwnerAccount(@RequestBody @Valid AccountProfileDto accountProfileDto,
+    public AccountProfileDto updateOwnerAccount(@RequestBody @Valid AccountProfileDto accountProfileDto,
                                      Authentication authentication) throws Exception {
 
         // extract the email / phone number from authentication object.
-        String name = authentication.getName();
+        Long identifier = Long.parseLong(authentication.getName());
 
         // extract the account from the database.
-        Account dbAccount = accountService.findByEmailOrPhoneNumber(name, name).orElseThrow(() -> new AccessDeniedException(""));
+        Account dbAccount = accountService.findById(identifier).orElseThrow(() -> new AccessDeniedException(""));
 
         // update the owner's account with the new data.
         dbAccount.setFirstName(accountProfileDto.firstName());
@@ -118,10 +119,10 @@ public class OwnerAccountManagerController {
         dbAccount.setPhoneNumber(accountProfileDto.phoneNumber());
 
         // reflect the updates to the database.
-        accountService.save(dbAccount);
+        dbAccount = accountService.save(dbAccount).orElseThrow(()->new UpdateAccountFailureException(""));
 
-        // return new token in case that the email or phone number are changed.
-        return tokenService.generateToken(dbAccount.getEmail(), AccountType.OWNER);
+        // return the account profile dto (without password).
+        return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
     }
 
     // change owner account password
@@ -153,10 +154,10 @@ public class OwnerAccountManagerController {
     @DeleteMapping("/owner-account-manager")
     @PreAuthorize("hasAuthority('SCOPE_OWNER')")
     public ResponseEntity deleteOwnerAccount(Authentication authentication) {
-        // extract email / phone number from the authentication object.
-        String name = authentication.getName();
+        // extract the account_id from the authentication object.
+        Long identifier = Long.parseLong(authentication.getName());
 
-        ownerService.deleteByAccount_EmailOrAccount_phoneNumber(name, name);
+        ownerService.deleteByAccountId(identifier);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
