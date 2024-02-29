@@ -34,7 +34,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-public class Config {
+public class SecurityConfig {
 
     private final RsaKeyProperties rsaKeys;
 
@@ -46,9 +46,9 @@ public class Config {
     @Autowired
     private final ClientAuthenticationProviderService clientAuthenticationProviderService;
 
-    public Config(RsaKeyProperties rsaKeys, OwnerAuthenticationProviderService ownerAuthenticationProviderService,
-                  CoachAuthenticationProviderService coachAuthenticationProviderService,
-                  ClientAuthenticationProviderService clientAuthenticationProviderService) {
+    public SecurityConfig(RsaKeyProperties rsaKeys, OwnerAuthenticationProviderService ownerAuthenticationProviderService,
+                          CoachAuthenticationProviderService coachAuthenticationProviderService,
+                          ClientAuthenticationProviderService clientAuthenticationProviderService) {
         this.rsaKeys = rsaKeys;
         this.ownerAuthenticationProviderService = ownerAuthenticationProviderService;
         this.coachAuthenticationProviderService = coachAuthenticationProviderService;

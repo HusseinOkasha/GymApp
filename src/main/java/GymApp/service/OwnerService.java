@@ -14,5 +14,6 @@ public interface OwnerService {
     Optional<Owner> save(Owner owner);
     void deleteById(long Id);
     void deleteByAccountId(long accountId);
+    void deleteAll();
 
 }

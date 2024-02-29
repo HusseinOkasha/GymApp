@@ -53,4 +53,8 @@ public class OwnerServiceImpl implements OwnerService{
     public void deleteByAccountId(long accountId) {
         ownerRepository.deleteByAccountId(accountId);
     }
+    @Override
+    public void deleteAll(){
+        ownerRepository.deleteAll();
+    }
 }
