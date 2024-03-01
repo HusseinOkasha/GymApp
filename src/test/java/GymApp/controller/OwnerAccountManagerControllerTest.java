@@ -78,7 +78,7 @@ class OwnerAccountManagerControllerTest {
         ownerService.save(owner2);
 
         token = login("1", "123",
-                "http://localhost:" + port + "/api/login/owner");
+                getBaseUrl()+ "/login/owner");
     }
 
     @Test
@@ -89,8 +89,8 @@ class OwnerAccountManagerControllerTest {
 
     @Test
     void shouldGetAllOwners() {
-        // get port number as it's generated randomly.
-        String baseUrl = "http://localhost:" + port + "/api" ;
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl() ;
 
         // Sending request associated with the token to get a list of all owners.
         HttpHeaders headers = new HttpHeaders();
@@ -107,8 +107,8 @@ class OwnerAccountManagerControllerTest {
 
     @Test
     void shouldGetOwner() {
-        // get port number as it's generated randomly.
-        String baseUrl = "http://localhost:" + port + "/api";
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
 
         // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
         HttpHeaders headers = new HttpHeaders();
@@ -125,8 +125,8 @@ class OwnerAccountManagerControllerTest {
 
     @Test
     void shouldCreateOwnerAccount() {
-        // get port number as it's generated randomly.
-        String baseUrl = "http://localhost:" + port + "/api";
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
 
         // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
         HttpHeaders headers = new HttpHeaders();
@@ -163,8 +163,8 @@ class OwnerAccountManagerControllerTest {
 
     @Test
     void shouldUpdateOwnerAccount() {
-        // get port number as it's generated randomly.
-        String baseUrl = "http://localhost:" + port + "/api";
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
 
         // new values to update owner account.
         String updatedFirstName = "updatedFirstName";
@@ -200,8 +200,8 @@ class OwnerAccountManagerControllerTest {
 
     @Test
     void shouldChangeOwnerAccountPassword() {
-        // get port number as it's generated randomly.
-        String baseUrl = "http://localhost:" + port + "/api";
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
 
 
         // new password
@@ -230,8 +230,8 @@ class OwnerAccountManagerControllerTest {
 
     @Test
     void shouldDeleteOwnerAccount() {
-        // get port number as it's generated randomly.
-        String baseUrl = "http://localhost:" + port + "/api";
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
 
 
                 HttpHeaders headers = new HttpHeaders();
@@ -268,6 +268,13 @@ class OwnerAccountManagerControllerTest {
                 ,String.class);
 
         return token;
+    }
+
+    // utility method to get the base url
+     String getBaseUrl(){
+        String baseUrl = "http://localhost:" + port + "/api";
+        return baseUrl;
+
     }
 
 
