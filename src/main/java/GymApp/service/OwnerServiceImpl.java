@@ -31,9 +31,6 @@ public class OwnerServiceImpl implements OwnerService{
     public Optional<Owner> findByAccountId(long accountId) {
         return ownerRepository.findByAccountId(accountId);
     }
-    public Optional<Owner> findByEmailOrPhoneNumber(String email, String phoneNumber){
-        return ownerRepository.findByAccount_EmailOrAccount_PhoneNumber(email, phoneNumber);
-    }
 
     @Override
     public Optional<Owner> save(Owner owner) {
