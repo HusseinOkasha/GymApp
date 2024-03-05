@@ -16,6 +16,9 @@ public class Coach {
 
     public Coach() {
     }
+    public Coach(Account account) {
+        this.account = account;
+    }
 
     public Coach(long id, Account account) {
         this.id = id;
