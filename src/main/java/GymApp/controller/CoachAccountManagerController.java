@@ -10,6 +10,8 @@ import GymApp.entity.Coach;
 
 import GymApp.entity.Owner;
 import GymApp.exception.AccountCreationFailureException;
+import GymApp.exception.AccountNotFoundException;
+import GymApp.exception.UpdateAccountFailureException;
 import GymApp.security.EncryptionService;
 import GymApp.service.*;
 import GymApp.util.AccountEntityAndDtoConverters;
@@ -18,6 +20,7 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,12 +34,15 @@ public class CoachAccountManagerController {
     @Autowired
     private final EncryptionService encryptionService;
     @Autowired
+    private final AccountService accountService;
+    @Autowired
     private final TokenService tokenService;
 
-    public CoachAccountManagerController(CoachService coachService, EncryptionService encryptionService,
+    public CoachAccountManagerController(CoachService coachService, EncryptionService encryptionService, AccountService accountService,
                                          TokenService tokenService) {
         this.coachService = coachService;
         this.encryptionService = encryptionService;
+        this.accountService = accountService;
         this.tokenService = tokenService;
     }
 
@@ -91,4 +97,47 @@ public class CoachAccountManagerController {
             throw new BadRequestException("Empty email and phoneNumber");
         }
     }
+
+    @GetMapping("/coach-account-manager")
+    @Validated
+    @PreAuthorize("hasAuthority('SCOPE_COACH')")
+    public AccountProfileDto getMyProfile(Authentication authentication) throws  Exception {
+
+        // extract the account id from the authentication object.
+        long id = Long.parseLong(authentication.getName());
+
+        // get the coach with this account id.
+        Coach coach = coachService.findByAccountId(id).orElseThrow(()-> new AccountNotFoundException(""));
+
+        // return coach profile.
+        return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(coach.getAccount());
+    }
+
+
+    @PutMapping("/coach-account-manager")
+    @Validated
+    @PreAuthorize("hasAuthority('SCOPE_COACH')")
+    public AccountProfileDto updateMyProfile(@RequestBody @Valid AccountProfileDto accountProfileDto,
+                                             Authentication authentication) throws  Exception {
+
+        // extract the account id from the authentication object.
+        long id = Long.parseLong(authentication.getName());
+
+        // get the coach with this account id.
+        Account dbAccount = accountService.findById(id).orElseThrow(()-> new AccountNotFoundException(""));
+
+        // update the coach's account with the new data.
+        dbAccount.setFirstName(accountProfileDto.firstName());
+        dbAccount.setSecondName(accountProfileDto.SecondName());
+        dbAccount.setThirdName(accountProfileDto.thirdName());
+        dbAccount.setEmail(accountProfileDto.email());
+        dbAccount.setPhoneNumber(accountProfileDto.phoneNumber());
+
+        // reflect the updates to the database.
+        dbAccount = accountService.save(dbAccount).orElseThrow(()->new UpdateAccountFailureException(""));
+
+        // return the account profile dto (without password).
+        return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
+    }
+
 }
