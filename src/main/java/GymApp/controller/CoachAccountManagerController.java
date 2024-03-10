@@ -2,6 +2,7 @@ package GymApp.controller;
 
 import GymApp.dao.CoachRepository;
 import GymApp.dto.AccountProfileDto;
+import GymApp.dto.ChangePasswordDto;
 import GymApp.dto.CreateAccountDto;
 import GymApp.dto.DeleteAccountDto;
 import GymApp.entity.Account;
@@ -18,6 +19,7 @@ import GymApp.util.AccountEntityAndDtoConverters;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import org.springframework.security.core.Authentication;
@@ -139,5 +141,28 @@ public class CoachAccountManagerController {
         // return the account profile dto (without password).
         return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
     }
+
+    @PutMapping("/coach-account-manager/password")
+    @Validated
+    @PreAuthorize("hasAuthority('SCOPE_COACH')")
+    public void changePassword(@RequestBody @Valid ChangePasswordDto changePasswordDto,
+                                            Authentication authentication){
+        //  extract the account id from the authentication object.
+        long accountId = Long.parseLong(authentication.getName());
+
+        // fetch the account from the database.
+        Account dbAccount  = accountService.findById(accountId).orElseThrow(()-> new AccessDeniedException(""));
+
+        // encrypt the password before saving it in the database.
+        String encryptedPassword = encryptionService.encryptString(changePasswordDto.password());
+
+        // replace the old password with the new one.
+        dbAccount.setPassword(encryptedPassword);
+
+        // save changes to the database.
+        accountService.save(dbAccount);
+
+    }
+
 
 }
