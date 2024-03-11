@@ -35,17 +35,13 @@ public class CoachAccountManagerController {
     private final CoachService coachService;
     @Autowired
     private final EncryptionService encryptionService;
-    @Autowired
-    private final AccountService accountService;
-    @Autowired
-    private final TokenService tokenService;
 
-    public CoachAccountManagerController(CoachService coachService, EncryptionService encryptionService, AccountService accountService,
-                                         TokenService tokenService) {
+
+
+    public CoachAccountManagerController(CoachService coachService, EncryptionService encryptionService) {
         this.coachService = coachService;
         this.encryptionService = encryptionService;
-        this.accountService = accountService;
-        this.tokenService = tokenService;
+
     }
 
     @PostMapping("/coach-account-manager")
@@ -56,7 +52,7 @@ public class CoachAccountManagerController {
 
         // create entity account from the account dto
         Account newAccount = AccountEntityAndDtoConverters
-                .convertCreateAndUpdateAccountDtoToAccountEntity(createAccountDto);
+                .convertCreateAccountDtoToAccountEntity(createAccountDto);
 
         // encrypt the password
         String password = newAccount.getPassword();
@@ -71,98 +67,5 @@ public class CoachAccountManagerController {
         // return the account profile dto (without password).
         return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);
     }
-
-    @GetMapping("/coach-account-manager/all")
-    @Validated
-    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
-    public List<AccountProfileDto> getAllCoaches(){
-        // extract all accounts of type coach from the database
-        List<Coach> coaches = coachService.findAll();
-        return coaches.stream().map(Coach::getAccount)
-                .map(AccountEntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
-    }
-
-    @DeleteMapping("/coach-account-manager")
-    @Validated
-    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
-    public void deleteCoachAccount(@RequestBody @Valid DeleteAccountDto deleteAccountDto) throws BadRequestException {
-        // Here we depend on email or phone number to delete coach account.
-        // So we check the existance of both
-        if(deleteAccountDto.email() != null){
-            coachService.deleteByAccount_Email(deleteAccountDto.email());
-        }
-        else if (deleteAccountDto.phoneNumber()!=null) {
-            coachService.deleteByAccount_PhoneNumber(deleteAccountDto.phoneNumber());
-        }
-        else {
-            // incase there is no email or pass
-            throw new BadRequestException("Empty email and phoneNumber");
-        }
-    }
-
-    @GetMapping("/coach-account-manager")
-    @Validated
-    @PreAuthorize("hasAuthority('SCOPE_COACH')")
-    public AccountProfileDto getMyProfile(Authentication authentication) throws  Exception {
-
-        // extract the account id from the authentication object.
-        long id = Long.parseLong(authentication.getName());
-
-        // get the coach with this account id.
-        Coach coach = coachService.findByAccountId(id).orElseThrow(()-> new AccountNotFoundException(""));
-
-        // return coach profile.
-        return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(coach.getAccount());
-    }
-
-
-    @PutMapping("/coach-account-manager")
-    @Validated
-    @PreAuthorize("hasAuthority('SCOPE_COACH')")
-    public AccountProfileDto updateMyProfile(@RequestBody @Valid AccountProfileDto accountProfileDto,
-                                             Authentication authentication) throws  Exception {
-
-        // extract the account id from the authentication object.
-        long id = Long.parseLong(authentication.getName());
-
-        // get the coach with this account id.
-        Account dbAccount = accountService.findById(id).orElseThrow(()-> new AccountNotFoundException(""));
-
-        // update the coach's account with the new data.
-        dbAccount.setFirstName(accountProfileDto.firstName());
-        dbAccount.setSecondName(accountProfileDto.SecondName());
-        dbAccount.setThirdName(accountProfileDto.thirdName());
-        dbAccount.setEmail(accountProfileDto.email());
-        dbAccount.setPhoneNumber(accountProfileDto.phoneNumber());
-
-        // reflect the updates to the database.
-        dbAccount = accountService.save(dbAccount).orElseThrow(()->new UpdateAccountFailureException(""));
-
-        // return the account profile dto (without password).
-        return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
-    }
-
-    @PutMapping("/coach-account-manager/password")
-    @Validated
-    @PreAuthorize("hasAuthority('SCOPE_COACH')")
-    public void changePassword(@RequestBody @Valid ChangePasswordDto changePasswordDto,
-                                            Authentication authentication){
-        //  extract the account id from the authentication object.
-        long accountId = Long.parseLong(authentication.getName());
-
-        // fetch the account from the database.
-        Account dbAccount  = accountService.findById(accountId).orElseThrow(()-> new AccessDeniedException(""));
-
-        // encrypt the password before saving it in the database.
-        String encryptedPassword = encryptionService.encryptString(changePasswordDto.password());
-
-        // replace the old password with the new one.
-        dbAccount.setPassword(encryptedPassword);
-
-        // save changes to the database.
-        accountService.save(dbAccount);
-
-    }
-
 
 }
