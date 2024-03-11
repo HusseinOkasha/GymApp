@@ -2,6 +2,7 @@ package GymApp.service;
 
 import GymApp.dao.ClientRepository;
 import GymApp.entity.Client;
+import GymApp.entity.Coach;
 import GymApp.entity.Owner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -46,5 +47,16 @@ public class ClientServiceImpl implements  ClientService{
     @Override
     public void deleteByAccountId(long accountId) {
         clientRepository.deleteByAccountId(accountId);
+    }
+    @Override
+    public void deleteByAccount_Email(String email){
+        Optional<Client> client = clientRepository.findByAccount_Email(email);
+        client.ifPresent(value -> clientRepository.deleteById(value.getId()));
+    }
+
+    @Override
+    public void deleteByAccount_PhoneNumber(String phoneNumber){
+        Optional<Client> coach = clientRepository.findByAccount_PhoneNumber(phoneNumber);
+        coach.ifPresent(value -> clientRepository.deleteById(value.getId()));
     }
 }

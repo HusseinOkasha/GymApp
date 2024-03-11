@@ -6,7 +6,7 @@ import GymApp.entity.Account;
 
 public class AccountEntityAndDtoConverters {
 
-    public  static AccountProfileDto convertAccountEntityToAccountProfileDto(Account account){
+    public static AccountProfileDto convertAccountEntityToAccountProfileDto(Account account) {
         AccountProfileDto accountProfileDto = new AccountProfileDto(
                 account.getId(), account.getFirstName(), account.getSecondName(), account.getThirdName(),
                 account.getEmail(), account.getPhoneNumber(), account.getCreatedAt(),
@@ -15,7 +15,7 @@ public class AccountEntityAndDtoConverters {
         return accountProfileDto;
     }
 
-    public  static Account convertAccountProfileDtoToAccountEntity(AccountProfileDto accountProfileDto){
+    public static Account convertAccountProfileDtoToAccountEntity(AccountProfileDto accountProfileDto) {
         Account account = new Account(accountProfileDto.firstName(), accountProfileDto.SecondName(), accountProfileDto.thirdName(),
                 accountProfileDto.email(), accountProfileDto.phoneNumber(), null, accountProfileDto.createdAt(),
                 accountProfileDto.updatedAt()
@@ -23,13 +23,14 @@ public class AccountEntityAndDtoConverters {
         return account;
     }
 
-    public  static Account convertCreateAndUpdateAccountDtoToAccountEntity(CreateAccountDto createAccountDto){
-        Account account = new Account(createAccountDto.firstName(), createAccountDto.SecondName(),
-                createAccountDto.thirdName(), createAccountDto.email(), createAccountDto.phoneNumber(),
-                createAccountDto.password(), createAccountDto.createdAt(), createAccountDto.updatedAt()
-        );
+    public static Account convertCreateAccountDtoToAccountEntity(CreateAccountDto createAccountDto){
+        Account account = new Account();
+        account.setFirstName(createAccountDto.firstName());
+        account.setSecondName(createAccountDto.SecondName());
+        account.setThirdName(createAccountDto.thirdName());
+        account.setEmail(createAccountDto.email());
+        account.setPassword(createAccountDto.password());
+        account.setPhoneNumber(createAccountDto.phoneNumber());
         return account;
     }
-
-
 }
