@@ -27,23 +27,12 @@ public class AdministrativeAccountManager {
     private final OwnerService ownerService;
     @Autowired
     private final ClientService clientService;
-    @Autowired
-    private final EncryptionService encryptionService;
-    @Autowired
-    private final AccountService accountService;
-    @Autowired
-    private final TokenService tokenService;
-
 
     public AdministrativeAccountManager(CoachService coachService, OwnerService ownerService,
-                                        ClientService clientService, EncryptionService encryptionService,
-                                        AccountService accountService, TokenService tokenService) {
+                                        ClientService clientService) {
         this.coachService = coachService;
         this.ownerService = ownerService;
         this.clientService = clientService;
-        this.encryptionService = encryptionService;
-        this.accountService = accountService;
-        this.tokenService = tokenService;
     }
 
     // get all owners accessible to owners only
@@ -129,6 +118,5 @@ public class AdministrativeAccountManager {
             throw new BadRequestException("Empty email and phoneNumber");
         }
     }
-
 
 }
