@@ -1,8 +1,10 @@
 package GymApp.util;
 
 import GymApp.dto.AccountProfileDto;
+import GymApp.dto.ClientAccountProfileDto;
 import GymApp.dto.CreateAccountDto;
 import GymApp.entity.Account;
+import GymApp.entity.Client;
 
 public class AccountEntityAndDtoConverters {
 
@@ -33,4 +35,17 @@ public class AccountEntityAndDtoConverters {
         account.setPhoneNumber(createAccountDto.phoneNumber());
         return account;
     }
+
+    public static ClientAccountProfileDto convertClientEntityToClientAccountProfileDto(Client client) {
+        Account account = client.getAccount();
+        ClientAccountProfileDto clientAccountProfileDto = new ClientAccountProfileDto(
+                account.getId(), account.getFirstName(), account.getSecondName(), account.getThirdName(),
+                account.getEmail(), account.getPhoneNumber(), client.getBirthDate(),account.getCreatedAt(),
+                account.getUpdatedAt()
+        );
+        return clientAccountProfileDto;
+    }
+
+
+
 }
