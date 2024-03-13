@@ -6,21 +6,14 @@ import GymApp.dto.ChangePasswordDto;
 import GymApp.dto.CreateAccountDto;
 import GymApp.entity.Account;
 import GymApp.entity.Owner;
-import GymApp.enums.AccountType;
 import GymApp.exception.AccountCreationFailureException;
 
-import GymApp.exception.AccountNotFoundException;
-import GymApp.exception.UpdateAccountFailureException;
 import GymApp.security.EncryptionService;
 import GymApp.service.AccountService;
 import GymApp.service.OwnerService;
-import GymApp.service.TokenService;
-import GymApp.util.AccountEntityAndDtoConverters;
+import GymApp.util.EntityAndDtoConverters;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
@@ -58,7 +51,7 @@ public class OwnerAccountManagerController {
             throws Exception {
 
         // create entity account from the account dto
-        Account newAccount = AccountEntityAndDtoConverters
+        Account newAccount = EntityAndDtoConverters
                 .convertCreateAccountDtoToAccountEntity(createAccountDto);
 
         // encrypt the password
@@ -75,7 +68,7 @@ public class OwnerAccountManagerController {
                 .orElseThrow(() -> new AccountCreationFailureException("failed to create the account in the database"));
 
         // return the account profile dto (without password).
-        return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
+        return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
     }
 
     // Get my profile details
@@ -95,7 +88,7 @@ public class OwnerAccountManagerController {
 
         // get their accounts and convert it to account profile dto
         return result.stream().map(Owner::getAccount)
-                .map(AccountEntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
+                .map(EntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
     }
 
     @PutMapping("/owner-account-manager")

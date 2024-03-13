@@ -6,7 +6,7 @@ import GymApp.dto.CreateAccountDto;
 import GymApp.entity.Account;
 import GymApp.entity.Client;
 
-public class AccountEntityAndDtoConverters {
+public class EntityAndDtoConverters {
 
     public static AccountProfileDto convertAccountEntityToAccountProfileDto(Account account) {
         AccountProfileDto accountProfileDto = new AccountProfileDto(

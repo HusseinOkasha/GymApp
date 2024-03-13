@@ -7,7 +7,7 @@ import GymApp.exception.AccountNotFoundException;
 import GymApp.exception.UpdateAccountFailureException;
 import GymApp.security.EncryptionService;
 import GymApp.service.AccountService;
-import GymApp.util.AccountEntityAndDtoConverters;
+import GymApp.util.EntityAndDtoConverters;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -48,7 +48,7 @@ public class Util {
         dbAccount = accountService.save(dbAccount).orElseThrow(()->new UpdateAccountFailureException(""));
 
         // return the account profile dto (without password).
-        return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
+        return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
 
     }
 
@@ -59,7 +59,7 @@ public class Util {
         long identifier = Long.parseLong(authentication.getName());
 
         // extract the account from the database and change it to dto which doesn't include the password.
-        return AccountEntityAndDtoConverters
+        return EntityAndDtoConverters
                 .convertAccountEntityToAccountProfileDto(accountService.findById(identifier)
                         .orElseThrow(()->new AccountNotFoundException("")));
     }
