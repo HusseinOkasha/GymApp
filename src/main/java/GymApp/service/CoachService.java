@@ -14,5 +14,6 @@ public interface CoachService {
     void deleteByAccountId(long accountId);
     void deleteByAccount_Email(String email);
     void deleteByAccount_PhoneNumber(String phoneNumber);
+    void deleteAll();
 
 }

@@ -59,4 +59,8 @@ public class CoachServiceImpl  implements  CoachService{
         Optional<Coach> coach = coachRepository.findByAccount_PhoneNumber(phoneNumber);
         coach.ifPresent(value -> coachRepository.deleteById(value.getId()));
     }
+    @Override
+    public void deleteAll(){
+        coachRepository.deleteAll();
+    }
 }
