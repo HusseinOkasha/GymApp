@@ -2,62 +2,33 @@ package GymApp.controller;
 
 import GymApp.dto.AccountProfileDto;
 import GymApp.dto.ChangePasswordDto;
-
-
 import GymApp.entity.Account;
-
 import GymApp.exception.AccountNotFoundException;
 import GymApp.exception.UpdateAccountFailureException;
 import GymApp.security.EncryptionService;
-import GymApp.service.*;
+import GymApp.service.AccountService;
 import GymApp.util.AccountEntityAndDtoConverters;
 import jakarta.validation.Valid;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-@RestController
-@RequestMapping("/api")
-// this controller represents the common actions that owner, coach or client can do to their own accounts.
-public class AccountManagerController {
-
-    @Autowired
-    private final OwnerService ownerService;
-    @Autowired
-    private final EncryptionService encryptionService;
+@Service
+public class Util {
     @Autowired
     private final AccountService accountService;
 
-    public AccountManagerController(OwnerService ownerService, EncryptionService encryptionService,
-                                    AccountService accountService) {
-        this.ownerService = ownerService;
-        this.encryptionService = encryptionService;
+    @Autowired
+    private final EncryptionService encryptionService;
+
+    public Util(AccountService accountService, EncryptionService encryptionService) {
         this.accountService = accountService;
-
+        this.encryptionService = encryptionService;
     }
 
-    // Get my profile details
-    @GetMapping("/account-manager")
-    @Validated
-    AccountProfileDto getMyAccount(Authentication authentication) throws Exception {
-        // we depend on account_id as an identifier
-        long identifier = Long.parseLong(authentication.getName());
-
-     // extract the account from the database and change it to dto which doesn't include the password.
-     return AccountEntityAndDtoConverters
-             .convertAccountEntityToAccountProfileDto(accountService.findById(identifier)
-             .orElseThrow(()->new AccountNotFoundException("")));
-    }
-
-    // update my account details
-    @PutMapping("/account-manager")
-    @Validated
-    AccountProfileDto UpdateMyProfile(@RequestBody @Valid AccountProfileDto accountProfileDto,
+    public AccountProfileDto updateMyProfile(@RequestBody @Valid AccountProfileDto accountProfileDto,
                                       Authentication authentication) throws Exception {
 
         // extract account_id from authentication object as I rely on it as an identifier.
@@ -81,10 +52,19 @@ public class AccountManagerController {
 
     }
 
-    // change password
-    @PutMapping("/account-manager/password")
-    @Validated
-    void changePassword(@RequestBody @Valid ChangePasswordDto changePasswordDto, Authentication authentication){
+    AccountProfileDto getMyAccount(Authentication authentication) throws Exception {
+        // this function is used to get the account details in the account table.
+
+        // we depend on account_id as an identifier
+        long identifier = Long.parseLong(authentication.getName());
+
+        // extract the account from the database and change it to dto which doesn't include the password.
+        return AccountEntityAndDtoConverters
+                .convertAccountEntityToAccountProfileDto(accountService.findById(identifier)
+                        .orElseThrow(()->new AccountNotFoundException("")));
+    }
+
+    void changePassword(ChangePasswordDto changePasswordDto, Authentication authentication){
         //  extract the account id from the authentication object.
         long accountId = Long.parseLong(authentication.getName());
 
@@ -103,15 +83,6 @@ public class AccountManagerController {
     }
 
 
-    // only an owner can delete his own account.
-    @DeleteMapping("account-manager")
-    @Validated
-    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
-    void deleteMyOwnerAccount(Authentication authentication){
-        // as I use the account_id as a principle while creating usernamePasswordAuthenticationToken.
-        long identifier = Long.parseLong(authentication.getName());
 
-        ownerService.deleteByAccountId(identifier);
-    }
 
 }

@@ -38,12 +38,12 @@ public class AccountEntityAndDtoConverters {
 
     public static ClientAccountProfileDto convertClientEntityToClientAccountProfileDto(Client client) {
         Account account = client.getAccount();
-        ClientAccountProfileDto clientAccountProfileDto = new ClientAccountProfileDto(
-                account.getId(), account.getFirstName(), account.getSecondName(), account.getThirdName(),
-                account.getEmail(), account.getPhoneNumber(), client.getBirthDate(),account.getCreatedAt(),
-                account.getUpdatedAt()
-        );
-        return clientAccountProfileDto;
+        AccountProfileDto accountProfileDto = new AccountProfileDto(account.getId(), account.getFirstName(),
+                account.getSecondName(), account.getThirdName(), account.getEmail(), account.getPhoneNumber(),
+                account.getCreatedAt(), account.getUpdatedAt()) ;
+
+        return new ClientAccountProfileDto(accountProfileDto,
+                client.getBirthDate());
     }
 
 
