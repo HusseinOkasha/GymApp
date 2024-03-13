@@ -1,6 +1,5 @@
 package GymApp.controller;
 
-import GymApp.dao.CoachRepository;
 import GymApp.dto.AccountProfileDto;
 import GymApp.dto.ChangePasswordDto;
 import GymApp.dto.CreateAccountDto;
@@ -9,24 +8,19 @@ import GymApp.entity.Account;
 
 import GymApp.entity.Coach;
 
-import GymApp.entity.Owner;
 import GymApp.exception.AccountCreationFailureException;
-import GymApp.exception.AccountNotFoundException;
-import GymApp.exception.UpdateAccountFailureException;
 import GymApp.security.EncryptionService;
 import GymApp.service.*;
-import GymApp.util.AccountEntityAndDtoConverters;
+import GymApp.util.EntityAndDtoConverters;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.PrivateKey;
 import java.util.List;
 
 @RestController
@@ -54,7 +48,7 @@ public class CoachAccountManagerController {
             throws Exception {
 
         // create entity account from the account dto
-        Account newAccount = AccountEntityAndDtoConverters
+        Account newAccount = EntityAndDtoConverters
                 .convertCreateAccountDtoToAccountEntity(createAccountDto);
 
         // encrypt the password
@@ -68,7 +62,7 @@ public class CoachAccountManagerController {
         );
 
         // return the account profile dto (without password).
-        return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);
+        return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);
     }
 
     // Get my profile details
@@ -88,7 +82,7 @@ public class CoachAccountManagerController {
 
         // get their accounts and convert it to account profile dto
         return result.stream().map(Coach::getAccount)
-                .map(AccountEntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
+                .map(EntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
 
     }
 

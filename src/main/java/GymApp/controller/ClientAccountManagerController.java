@@ -11,7 +11,7 @@ import GymApp.exception.AccountNotFoundException;
 import GymApp.exception.UpdateAccountFailureException;
 import GymApp.security.EncryptionService;
 import GymApp.service.ClientService;
-import GymApp.util.AccountEntityAndDtoConverters;
+import GymApp.util.EntityAndDtoConverters;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +47,7 @@ public class ClientAccountManagerController {
             throws Exception {
 
         // create entity account from the account dto
-        Account newAccount = AccountEntityAndDtoConverters
+        Account newAccount = EntityAndDtoConverters
                 .convertCreateAccountDtoToAccountEntity(createClientAccountDto.createAccountDto());
 
         // encrypt the password
@@ -65,7 +65,7 @@ public class ClientAccountManagerController {
         );
 
         // return the account profile dto (without password).
-        return AccountEntityAndDtoConverters.convertClientEntityToClientAccountProfileDto(dbClient);
+        return EntityAndDtoConverters.convertClientEntityToClientAccountProfileDto(dbClient);
     }
 
     // get client profile
@@ -77,7 +77,7 @@ public class ClientAccountManagerController {
 
         // extract the account from the database and change it to dto which doesn't include the password.
         // but it also includes the client birthdate
-        return AccountEntityAndDtoConverters
+        return EntityAndDtoConverters
                 .convertClientEntityToClientAccountProfileDto(clientService.findByAccountId(identifier)
                         .orElseThrow(()->new AccountNotFoundException("")));
     }
@@ -93,7 +93,7 @@ public class ClientAccountManagerController {
 
         // get their accounts and convert it to account profile dto
         return result.stream().map(Client::getAccount)
-                .map(AccountEntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
+                .map(EntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
 
     }
 
@@ -113,7 +113,7 @@ public class ClientAccountManagerController {
         dbClient.setBirthDate(clientAccountProfileDto.birthDate());
         clientService.save(dbClient).orElseThrow(()-> new UpdateAccountFailureException(""));
 
-        return AccountEntityAndDtoConverters.convertClientEntityToClientAccountProfileDto(dbClient);
+        return EntityAndDtoConverters.convertClientEntityToClientAccountProfileDto(dbClient);
     }
 
     // change password
