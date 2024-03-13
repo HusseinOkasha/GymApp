@@ -10,6 +10,7 @@ import GymApp.entity.Owner;
 import GymApp.service.OwnerService;
 
 import com.github.dockerjava.zerodep.shaded.org.apache.commons.codec.binary.Base64;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
 
@@ -28,8 +30,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
-
-
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -47,8 +48,8 @@ class OwnerAccountManagerControllerTest {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:latest")
             .withDatabaseName("database").withUsername("myuser");
 
-    static String token;
-
+    private static String token;
+    private static List<Account> accounts = new ArrayList<>();
     @Autowired
     RestTemplate restTemplate;
     @Autowired
@@ -57,11 +58,9 @@ class OwnerAccountManagerControllerTest {
     @LocalServerPort
     private int port;
 
-    @BeforeEach
-    void setUp() {
-        // delete all owners to start fresh.
-        ownerService.deleteAll();
 
+    @BeforeAll
+    static void generalSetUp(){
         // "123" encoded with bCrypt
         String bCryptPassword = "$2a$12$fdQCjXHktjZczz5hlHg77u8bIXUQdzGQf5k7ulN.cxzhW2vidHzSu";
 
@@ -71,9 +70,21 @@ class OwnerAccountManagerControllerTest {
         Account acc2 = new Account("f2", "s2", "t2","e2@gmail.com", "2",
                 bCryptPassword, null, null);
 
+        // add newly created accounts to the accounts list.
+        accounts.add(acc1);
+        accounts.add(acc2);
+
+
+    }
+    @BeforeEach
+    void setUp() {
+        // delete all owners to start fresh.
+        ownerService.deleteAll();
+
+
         // Make them owner accounts.
-        Owner owner1 = new Owner(acc1);
-        Owner owner2 = new Owner(acc2);
+        Owner owner1 = new Owner(new Account(accounts.get(0)));
+        Owner owner2 = new Owner(new Account(accounts.get(1)));
         ownerService.save(owner1);
         ownerService.save(owner2);
 
@@ -84,43 +95,6 @@ class OwnerAccountManagerControllerTest {
     @Test
     void postgresContainerShouldBeRunning (){
         assertThat(postgres.isRunning()).isTrue();
-    }
-
-
-    @Test
-    void shouldGetAllOwners() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl() ;
-
-        // Sending request associated with the token to get a list of all owners.
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + token);
-
-        HttpEntity<String> request = new HttpEntity<String>(headers);
-        List<AccountProfileDto> allOwnerAccounts = restTemplate.exchange(baseUrl + "/owner-account-manager/all",
-                HttpMethod.GET, request,List.class).getBody();
-
-        // Check that there is 2 owner accounts returned
-        assertThat(allOwnerAccounts).isNotNull();
-        assertThat(allOwnerAccounts.size()).isEqualTo(2);
-    }
-
-    @Test
-    void shouldGetOwner() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-        HttpEntity<String> request = new HttpEntity<String>(headers);
-        AccountProfileDto ownerAccount = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                HttpMethod.GET, request, AccountProfileDto.class).getBody();
-
-        assertThat(ownerAccount).isNotNull();
-        assertThat(ownerAccount.email()).isNotNull().isEqualTo("e1@gmail.com");
     }
 
     @Test
@@ -143,9 +117,8 @@ class OwnerAccountManagerControllerTest {
         String password = "123";
 
         // initalize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto(0,
-                firstName, secondName, thirdName, email, phoneNumber, password,
-                null, null);
+        CreateAccountDto createAccountDto = new CreateAccountDto(firstName, secondName, thirdName, email, phoneNumber,
+                password);
 
         HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
 
@@ -160,6 +133,52 @@ class OwnerAccountManagerControllerTest {
         assertThat(createdAccount.phoneNumber()).isEqualTo(phoneNumber);
 
     }
+
+    @Test
+    void shouldGetOwner() {
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + token);
+        HttpEntity<String> request = new HttpEntity<String>(headers);
+        AccountProfileDto ownerAccount = restTemplate.exchange(baseUrl + "/owner-account-manager",
+                HttpMethod.GET, request, AccountProfileDto.class).getBody();
+
+        assertThat(ownerAccount).isNotNull();
+        assertThat(ownerAccount.email()).isNotNull().isEqualTo("e1@gmail.com");
+    }
+
+
+    @Test
+    void shouldGetAllOwners() {
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl() ;
+
+        // Sending request associated with the token to get a list of all owners.
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + token);
+
+        HttpEntity<String> request = new HttpEntity<String>(headers);
+        ParameterizedTypeReference<List<AccountProfileDto>>
+                responseType = new ParameterizedTypeReference<List<AccountProfileDto>>() {};
+        List<AccountProfileDto> allOwnerAccounts = restTemplate.exchange(baseUrl + "/owner-account-manager/owners",
+                HttpMethod.GET, request, responseType).getBody();
+
+        // Check that there is 2 owner accounts returned
+        assertThat(allOwnerAccounts).isNotNull();
+        assertThat(allOwnerAccounts.size()).isEqualTo(2);
+
+        // check that the owners returned are the same ones which we inserted by the checking their emails.
+        List<String>possibleEmails = List.of(accounts.get(0).getEmail(), accounts.get(1).getEmail());
+        assertThat(allOwnerAccounts.get(0).email()).isIn(possibleEmails);
+        assertThat(allOwnerAccounts.get(1).email()).isIn(possibleEmails);
+    }
+
+
 
     @Test
     void shouldUpdateOwnerAccount() {
@@ -243,7 +262,7 @@ class OwnerAccountManagerControllerTest {
         HttpStatusCode responseStatusCode = restTemplate.exchange(baseUrl + "/owner-account-manager",
                 HttpMethod.DELETE, request, void.class).getStatusCode();
 
-        assertThat(responseStatusCode).isNotNull().isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(responseStatusCode).isNotNull().isEqualTo(HttpStatus.OK);
     }
 
 
