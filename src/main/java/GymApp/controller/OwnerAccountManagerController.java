@@ -37,13 +37,16 @@ public class OwnerAccountManagerController {
     private final OwnerService ownerService;
     @Autowired
     private final EncryptionService encryptionService;
+    @Autowired
+    private final Util util;
 
 
     public OwnerAccountManagerController(AccountService accountService, OwnerService ownerService,
-                                         EncryptionService encryptionService) {
+                                         EncryptionService encryptionService, Util util) {
         this.accountService = accountService;
         this.ownerService = ownerService;
         this.encryptionService = encryptionService;
+        this.util = util;
     }
 
 
@@ -73,6 +76,51 @@ public class OwnerAccountManagerController {
 
         // return the account profile dto (without password).
         return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
+    }
+
+    // Get my profile details
+    @GetMapping("/owner-account-manager")
+    @Validated
+    AccountProfileDto getMyAccount(Authentication authentication) throws Exception {
+       return util.getMyAccount(authentication);
+    }
+
+    // get all owners accessible to owners only
+    @GetMapping("/owner-account-manager/owners")
+    @Validated
+    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
+    List<AccountProfileDto> getAllOwnerAccounts(){
+        // get all owners from the database
+        List<Owner> result = ownerService.findAll();
+
+        // get their accounts and convert it to account profile dto
+        return result.stream().map(Owner::getAccount)
+                .map(AccountEntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
+    }
+
+    @PutMapping("/owner-account-manager")
+    @Validated
+    AccountProfileDto updateMyProfile(@RequestBody @Valid AccountProfileDto accountProfileDto,
+                                      Authentication authentication) throws Exception {
+        return util.updateMyProfile(accountProfileDto, authentication);
+    }
+
+    // change password
+    @PutMapping("/owner-account-manager/password")
+    @Validated
+    void changePassword(@RequestBody @Valid ChangePasswordDto changePasswordDto, Authentication authentication){
+       util.changePassword(changePasswordDto, authentication);
+    }
+
+
+    // only an owner can delete his own account.
+    @DeleteMapping("/owner-account-manager")
+    @Validated
+    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
+    void deleteMyOwnerAccount(Authentication authentication){
+        // as I use the account_id as a principle while creating usernamePasswordAuthenticationToken.
+        long identifier = Long.parseLong(authentication.getName());
+        ownerService.deleteByAccountId(identifier);
     }
 
 }

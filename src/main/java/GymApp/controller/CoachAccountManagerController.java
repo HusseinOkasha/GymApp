@@ -26,6 +26,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.PrivateKey;
 import java.util.List;
 
 @RestController
@@ -35,13 +36,15 @@ public class CoachAccountManagerController {
     private final CoachService coachService;
     @Autowired
     private final EncryptionService encryptionService;
+    @Autowired
+    private final Util util;
 
 
 
-    public CoachAccountManagerController(CoachService coachService, EncryptionService encryptionService) {
+    public CoachAccountManagerController(CoachService coachService, EncryptionService encryptionService, Util util) {
         this.coachService = coachService;
         this.encryptionService = encryptionService;
-
+        this.util = util;
     }
 
     @PostMapping("/coach-account-manager")
@@ -67,5 +70,60 @@ public class CoachAccountManagerController {
         // return the account profile dto (without password).
         return AccountEntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);
     }
+
+    // Get my profile details
+    @GetMapping("/coach-account-manager")
+    @Validated
+    AccountProfileDto getMyAccount(Authentication authentication) throws Exception {
+        return util.getMyAccount(authentication);
+    }
+
+    // get all coaches accessible to owners only
+    @GetMapping("/coach-account-manager/coaches")
+    @Validated
+    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
+    List<AccountProfileDto> getAllCoachAccounts(){
+        // get all owners from the database
+        List<Coach> result = coachService.findAll();
+
+        // get their accounts and convert it to account profile dto
+        return result.stream().map(Coach::getAccount)
+                .map(AccountEntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
+
+    }
+
+    @PutMapping("/coach-account-manager")
+    @Validated
+    AccountProfileDto updateMyProfile(@RequestBody @Valid AccountProfileDto accountProfileDto,
+                                      Authentication authentication) throws Exception {
+        return util.updateMyProfile(accountProfileDto, authentication);
+    }
+
+    // change password
+    @PutMapping("/coach-account-manager/password")
+    @Validated
+    void changePassword(@RequestBody @Valid ChangePasswordDto changePasswordDto, Authentication authentication){
+        util.changePassword(changePasswordDto, authentication);
+    }
+
+    // only an owner can delete coach account.
+    @DeleteMapping("/coach-account-manager")
+    @Validated
+    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
+    public void deleteCoachAccount(@RequestBody @Valid DeleteAccountDto deleteAccountDto) throws BadRequestException {
+        // Here we depend on email or phone number to delete coach account.
+        // So we check the existence of both
+        if(deleteAccountDto.email() != null){
+            coachService.deleteByAccount_Email(deleteAccountDto.email());
+        }
+        else if (deleteAccountDto.phoneNumber()!=null) {
+            coachService.deleteByAccount_PhoneNumber(deleteAccountDto.phoneNumber());
+        }
+        else {
+            // in case there is no email or pass
+            throw new BadRequestException("Empty email and phoneNumber");
+        }
+    }
+
 
 }
