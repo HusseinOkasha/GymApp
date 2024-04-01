@@ -87,13 +87,13 @@ public class ClientAccountManagerController {
     @GetMapping("/client-account-manager/clients")
     @Validated
     @PreAuthorize("hasAuthority('SCOPE_OWNER') or hasAuthority('SCOPE_COACH')")
-    List<AccountProfileDto> getAllClientsAccounts(){
+    List<ClientAccountProfileDto> getAllClientsAccounts(){
         // get all clients from the database
         List<Client> result = clientService.findAll();
 
         // get their accounts and convert it to account profile dto
-        return result.stream().map(Client::getAccount)
-                .map(EntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
+        return result.stream()
+                .map(EntityAndDtoConverters::convertClientEntityToClientAccountProfileDto).toList();
 
     }
 

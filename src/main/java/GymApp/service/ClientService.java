@@ -15,5 +15,6 @@ public interface ClientService {
     void deleteByAccount_PhoneNumber(String phoneNumber);
 
     void deleteByAccountId(long accountId);
+    void deleteAll();
 
 }

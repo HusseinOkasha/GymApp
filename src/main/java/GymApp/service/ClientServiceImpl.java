@@ -59,4 +59,8 @@ public class ClientServiceImpl implements  ClientService{
         Optional<Client> coach = clientRepository.findByAccount_PhoneNumber(phoneNumber);
         coach.ifPresent(value -> clientRepository.deleteById(value.getId()));
     }
+    @Override
+    public void deleteAll(){
+        clientRepository.deleteAll();
+    }
 }

@@ -191,7 +191,7 @@ class CoachAccountManagerControllerTest {
         // As port number as it's generated randomly.
         String baseUrl = getBaseUrl();
 
-        // new values to update owner account.
+        // new values to update coach account.
         String updatedFirstName = "updatedFirstName";
         String updatedSecondName = "updatedSecondName";
         String updatedThirdName = "updatedThirdName";
