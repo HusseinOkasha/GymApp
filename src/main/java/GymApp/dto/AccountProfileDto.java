@@ -6,6 +6,7 @@ package GymApp.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 // This Dto is used to represent the Account entity while retrieving it (return it to the outside world).

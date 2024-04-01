@@ -119,7 +119,6 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer((oauth2)-> oauth2.jwt(withDefaults()))
-                .authenticationProvider(ownerAuthenticationProviderService)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
     }

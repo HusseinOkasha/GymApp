@@ -11,6 +11,10 @@ public interface ClientService {
     Optional<Client> findByAccountId(long accountId);
     Optional<Client> save(Client client);
     void deleteById(long Id);
+    void deleteByAccount_Email(String email);
+    void deleteByAccount_PhoneNumber(String phoneNumber);
+
     void deleteByAccountId(long accountId);
+    void deleteAll();
 
 }

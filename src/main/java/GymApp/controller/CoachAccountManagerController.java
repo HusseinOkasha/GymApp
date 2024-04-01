@@ -1,20 +1,22 @@
 package GymApp.controller;
 
-
 import GymApp.dto.AccountProfileDto;
 import GymApp.dto.ChangePasswordDto;
 import GymApp.dto.CreateAccountDto;
+import GymApp.dto.DeleteAccountDto;
 import GymApp.entity.Account;
-import GymApp.entity.Owner;
-import GymApp.exception.AccountCreationFailureException;
 
+import GymApp.entity.Coach;
+
+import GymApp.exception.AccountCreationFailureException;
 import GymApp.security.EncryptionService;
-import GymApp.service.AccountService;
-import GymApp.service.OwnerService;
+import GymApp.service.*;
 import GymApp.util.EntityAndDtoConverters;
 import jakarta.validation.Valid;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,32 +24,27 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("api")
-public class OwnerAccountManagerController {
+@RequestMapping("/api")
+public class CoachAccountManagerController {
     @Autowired
-    private final AccountService accountService;
-    @Autowired
-    private final OwnerService ownerService;
+    private final CoachService coachService;
     @Autowired
     private final EncryptionService encryptionService;
     @Autowired
     private final Util util;
 
 
-    public OwnerAccountManagerController(AccountService accountService, OwnerService ownerService,
-                                         EncryptionService encryptionService, Util util) {
-        this.accountService = accountService;
-        this.ownerService = ownerService;
+
+    public CoachAccountManagerController(CoachService coachService, EncryptionService encryptionService, Util util) {
+        this.coachService = coachService;
         this.encryptionService = encryptionService;
         this.util = util;
     }
 
-
-    // create new owner account.
-    @PostMapping("/owner-account-manager")
-    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
+    @PostMapping("/coach-account-manager")
     @Validated
-    public AccountProfileDto createOwnerAccount(@RequestBody @Valid CreateAccountDto createAccountDto)
+    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
+    public AccountProfileDto createNewCoachAccount(@RequestBody @Valid CreateAccountDto createAccountDto)
             throws Exception {
 
         // create entity account from the account dto
@@ -59,39 +56,37 @@ public class OwnerAccountManagerController {
         String EncryptedPassword = encryptionService.encryptString(password);
         newAccount.setPassword(EncryptedPassword);
 
-        Account dbAccount;
-        dbAccount = accountService.save(newAccount)
-                .orElseThrow(() -> new AccountCreationFailureException("failed to create the account in the database"));
-
         // save the account_id in the owner table
-        ownerService.save(new Owner(dbAccount))
-                .orElseThrow(() -> new AccountCreationFailureException("failed to create the account in the database"));
+        coachService.save(new Coach(newAccount)).orElseThrow(
+                () -> new AccountCreationFailureException("failed to create the account in the database")
+        );
 
         // return the account profile dto (without password).
-        return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
+        return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);
     }
 
     // Get my profile details
-    @GetMapping("/owner-account-manager")
+    @GetMapping("/coach-account-manager")
     @Validated
     AccountProfileDto getMyAccount(Authentication authentication) throws Exception {
-       return util.getMyAccount(authentication);
+        return util.getMyAccount(authentication);
     }
 
-    // get all owners accessible to owners only
-    @GetMapping("/owner-account-manager/owners")
+    // get all coaches accessible to owners only
+    @GetMapping("/coach-account-manager/coaches")
     @Validated
     @PreAuthorize("hasAuthority('SCOPE_OWNER')")
-    List<AccountProfileDto> getAllOwnerAccounts(){
+    List<AccountProfileDto> getAllCoachAccounts(){
         // get all owners from the database
-        List<Owner> result = ownerService.findAll();
+        List<Coach> result = coachService.findAll();
 
         // get their accounts and convert it to account profile dto
-        return result.stream().map(Owner::getAccount)
+        return result.stream().map(Coach::getAccount)
                 .map(EntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
+
     }
 
-    @PutMapping("/owner-account-manager")
+    @PutMapping("/coach-account-manager")
     @Validated
     AccountProfileDto updateMyProfile(@RequestBody @Valid AccountProfileDto accountProfileDto,
                                       Authentication authentication) throws Exception {
@@ -99,21 +94,30 @@ public class OwnerAccountManagerController {
     }
 
     // change password
-    @PutMapping("/owner-account-manager/password")
+    @PutMapping("/coach-account-manager/password")
     @Validated
     void changePassword(@RequestBody @Valid ChangePasswordDto changePasswordDto, Authentication authentication){
-       util.changePassword(changePasswordDto, authentication);
+        util.changePassword(changePasswordDto, authentication);
     }
 
-
-    // only an owner can delete his own account.
-    @DeleteMapping("/owner-account-manager")
+    // only an owner can delete coach account.
+    @DeleteMapping("/coach-account-manager")
     @Validated
     @PreAuthorize("hasAuthority('SCOPE_OWNER')")
-    void deleteMyOwnerAccount(Authentication authentication){
-        // as I use the account_id as a principle while creating usernamePasswordAuthenticationToken.
-        long identifier = Long.parseLong(authentication.getName());
-        ownerService.deleteByAccountId(identifier);
+    public void deleteCoachAccount(@RequestBody @Valid DeleteAccountDto deleteAccountDto) throws BadRequestException {
+        // Here we depend on email or phone number to delete coach account.
+        // So we check the existence of both
+        if(deleteAccountDto.email() != null){
+            coachService.deleteByAccount_Email(deleteAccountDto.email());
+        }
+        else if (deleteAccountDto.phoneNumber()!=null) {
+            coachService.deleteByAccount_PhoneNumber(deleteAccountDto.phoneNumber());
+        }
+        else {
+            // in case there is no email or pass
+            throw new BadRequestException("Empty email and phoneNumber");
+        }
     }
+
 
 }

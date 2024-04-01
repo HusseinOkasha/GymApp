@@ -20,6 +20,7 @@ public class Client {
     private LocalDate birthDate;
 
     public Client(){}
+    public Client(Account account){this.account = account;}
 
     public Client(Account account, LocalDate birthDate) {
         this.account = account;

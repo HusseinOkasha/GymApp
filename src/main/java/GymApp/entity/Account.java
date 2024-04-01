@@ -44,6 +44,16 @@ public class Account {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
+    public Account(Account account){
+        this.firstName = account.getFirstName();
+        this.secondName = account.getSecondName();
+        this.thirdName = account.getThirdName();
+        this.email = account.getEmail();
+        this.phoneNumber = account.getPhoneNumber();
+        this.password = account.getPassword();
+        this.createdAt = account.getCreatedAt();
+        this.updatedAt = account.getUpdatedAt();
+    }
 
     public long getId() {
         return id;
