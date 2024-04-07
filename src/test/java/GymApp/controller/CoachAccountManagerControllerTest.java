@@ -21,6 +21,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -142,6 +143,166 @@ class CoachAccountManagerControllerTest {
 
     }
     @Test
+    void shouldNotCreateCoachAccountWithoutFirstName(){
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + ownerToken);
+
+        // initialize the dto
+        CreateAccountDto createAccountDto = new CreateAccountDto(null, "s3", "t3", "e3",
+                "3", "123");
+
+        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
+        try{
+            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
+                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+
+
+    }
+    @Test
+    void shouldNotCreateCoachAccountWithoutSecondName(){
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + ownerToken);
+
+        // initialize the dto
+        CreateAccountDto createAccountDto = new CreateAccountDto("f3", null, "t3", "e3",
+                "3", "123");
+
+        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
+        try{
+            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
+                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+
+
+    }
+    @Test
+    void shouldNotCreateCoachAccountWithoutThirdName(){
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + ownerToken);
+
+        // initialize the dto
+        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", null, "e3",
+                "3", "123");
+
+        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
+        try{
+            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
+                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+
+
+    }
+    @Test
+    void shouldNotCreateCoachAccountWithoutEmail(){
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + ownerToken);
+
+        // initialize the dto
+        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", "t3", null,
+                "3", "123");
+
+        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
+        try{
+            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
+                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+
+
+    }
+    @Test
+    void shouldNotCreateCoachAccountWithoutPhoneNumber(){
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + ownerToken);
+
+        // initialize the dto
+        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", "t3", "e3@gmail.com",
+                null, "123");
+
+        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
+        try{
+            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
+                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+
+
+    }
+
+
+    @Test
+    void shouldNotCreateCoachAccountWithoutPassword(){
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + ownerToken);
+
+        // initialize the dto
+        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s3", "t3", "e3",
+                "3", null);
+
+        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
+        try{
+            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
+                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+
+
+    }
+
+
+    @Test
     void shouldGetMyAccount() {
 
         // As port number as it's generated randomly.
@@ -222,6 +383,135 @@ class CoachAccountManagerControllerTest {
         assertThat(updatedAccountProfileDto.phoneNumber()).isEqualTo(updatedPhoneNumber);
 
     }
+    @Test
+    void shouldNotUpdateCoachAccountWithoutFirstName() {
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+
+        AccountProfileDto accountProfileDto = new AccountProfileDto(0,null, "updatedSecondName",
+                "updatedThirdName","updatedE1@gmail.com", "updatedPhoneNumber", null, null);
+
+
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + coachToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
+        try{
+            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/coach-account-manager",
+                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @Test
+    void shouldNotUpdateCoachAccountWithoutSecondName() {
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+
+        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", null,
+                "updatedThirdName","updatedE1@gmail.com", "updatedPhoneNumber", null, null);
+
+
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + coachToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
+        try{
+            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/coach-account-manager",
+                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+    }
+    @Test
+    void shouldNotUpdateCoachAccountWithoutThirdName() {
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+
+        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
+                null,"updatedE1@gmail.com", "updatedPhoneNumber", null, null);
+
+
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + coachToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
+        try{
+            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/coach-account-manager",
+                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @Test
+    void shouldNotUpdateCoachAccountWithoutEmail() {
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+
+        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
+                "updatedThirdName",null, "updatedPhoneNumber", null, null);
+
+
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + coachToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
+        try{
+            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/coach-account-manager",
+                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+    }
+    @Test
+    void shouldNotUpdateCoachAccountWithoutPhoneNumber() {
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+
+        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
+                "updatedThirdName","updatedE1@gmail.com", null, null, null);
+
+
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + coachToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
+        try{
+            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/coach-account-manager",
+                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
 
     @Test
     void shouldChangePassword() {
@@ -251,6 +541,33 @@ class CoachAccountManagerControllerTest {
         assertThat(token).isNotNull();
 
     }
+    @Test
+    void shouldNotUpdateCoachAccountPasswordWithoutTheNewPassword() {
+        // As port number as it's generated randomly.
+        String baseUrl = getBaseUrl();
+
+        // new password
+        String newPassword = null;
+
+        ChangePasswordDto changePasswordDto = new ChangePasswordDto(newPassword);
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + coachToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity request = new HttpEntity<>(changePasswordDto, headers);
+
+        try{
+            HttpStatusCode httpStatusCode = restTemplate.exchange(baseUrl + "/coach-account-manager/password",
+                    HttpMethod.PUT, request, void.class).getStatusCode();
+        }
+        catch (HttpClientErrorException e){
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+
+    }
+
 
     @Test
     void deleteCoachAccount() {
