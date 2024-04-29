@@ -1,8 +1,9 @@
 package GymApp.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "account", uniqueConstraints = {
@@ -30,11 +31,16 @@ public class Account {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @OneToMany(mappedBy = "account")
+    private Set<AccountWorkout> accountWorkouts = new HashSet<>();
+
+
     public Account() {
     }
 
+
     public Account(String firstName, String secondName, String thirdName, String email, String phoneNumber,
-                    String password, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                   String password, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.firstName = firstName;
         this.secondName = secondName;
         this.thirdName = thirdName;
@@ -44,6 +50,7 @@ public class Account {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
+
     public Account(Account account){
         this.firstName = account.getFirstName();
         this.secondName = account.getSecondName();
@@ -125,6 +132,14 @@ public class Account {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Set<AccountWorkout> getAccountWorkouts() {
+        return accountWorkouts;
+    }
+
+    public void setAccountWorkouts(Set<AccountWorkout> accountWorkouts) {
+        this.accountWorkouts = accountWorkouts;
     }
 
     @PrePersist
