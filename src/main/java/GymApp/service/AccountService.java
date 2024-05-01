@@ -12,7 +12,7 @@ public interface AccountService {
       Optional<Account>findByEmail(String email);
       Optional<Account>findByPhoneNumber(String phoneNumber);
       Optional<Account>findByEmailOrPhoneNumber(String email, String phoneNumber);
-      Optional<Account> save(Account account);
+      Account save(Account account);
       void deleteById(long Id);
       void deleteByEmail(String email);
       void deleteByPhoneNumber(String phoneNumber);

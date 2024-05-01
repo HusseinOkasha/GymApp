@@ -13,13 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/login")
 @RestController
 public class LoginController {
-    @Autowired
-    private final AccountService accountService;
+
     @Autowired
     private final TokenService tokenService;
 
-    public LoginController(AccountService accountService, TokenService tokenService){
-        this.accountService = accountService;
+    public LoginController(TokenService tokenService){
         this.tokenService = tokenService;
     }
     @PostMapping("/owner")

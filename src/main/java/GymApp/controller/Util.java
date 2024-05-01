@@ -29,7 +29,7 @@ public class Util {
     }
 
     public AccountProfileDto updateMyProfile(@RequestBody @Valid AccountProfileDto accountProfileDto,
-                                      Authentication authentication) throws Exception {
+                                      Authentication authentication) {
 
         // extract account_id from authentication object as I rely on it as an identifier.
         long identifier = Long.parseLong(authentication.getName());
@@ -45,7 +45,7 @@ public class Util {
         dbAccount.setPhoneNumber(accountProfileDto.phoneNumber());
 
         // reflect the updates to the database.
-        dbAccount = accountService.save(dbAccount).orElseThrow(()->new UpdateAccountFailureException(""));
+        dbAccount = accountService.save(dbAccount);
 
         // return the account profile dto (without password).
         return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
