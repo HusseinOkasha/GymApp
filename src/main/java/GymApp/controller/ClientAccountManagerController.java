@@ -60,9 +60,7 @@ public class ClientAccountManagerController {
         newClient.setBirthDate(createClientAccountDto.birthDate());
 
         // save the account_id in the owner table
-        Client dbClient = clientService.save(newClient).orElseThrow(
-                () -> new AccountCreationFailureException("failed to create the account in the database")
-        );
+        Client dbClient = clientService.save(newClient);
 
         // return the account profile dto (without password).
         return EntityAndDtoConverters.convertClientEntityToClientAccountProfileDto(dbClient);
@@ -111,7 +109,7 @@ public class ClientAccountManagerController {
         Client dbClient = clientService.findByAccountId(identifier).orElseThrow(()-> new AccountNotFoundException(""));
 
         dbClient.setBirthDate(clientAccountProfileDto.birthDate());
-        clientService.save(dbClient).orElseThrow(()-> new UpdateAccountFailureException(""));
+        clientService.save(dbClient);
 
         return EntityAndDtoConverters.convertClientEntityToClientAccountProfileDto(dbClient);
     }
