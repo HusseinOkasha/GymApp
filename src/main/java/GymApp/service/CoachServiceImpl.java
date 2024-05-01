@@ -34,8 +34,8 @@ public class CoachServiceImpl  implements  CoachService{
     }
 
     @Override
-    public Optional<Coach> save(Coach coach) {
-        return Optional.of(coachRepository.save(coach));
+    public Coach save(Coach coach) {
+        return coachRepository.save(coach);
     }
 
     @Override
