@@ -25,8 +25,8 @@ public class AccountWorkoutServiceImpl implements AccountWorkoutService {
     }
 
     @Override
-    public void save(AccountWorkout accountWorkout) {
-        accountWorkoutRepository.save(accountWorkout);
+    public AccountWorkout save(AccountWorkout accountWorkout) {
+        return accountWorkoutRepository.save(accountWorkout);
     }
 
     @Override

@@ -9,7 +9,7 @@ public interface CoachService {
     List<Coach> findAll();
     Optional<Coach> findById(long id);
     Optional<Coach> findByAccountId(long accountId);
-    Optional<Coach> save(Coach coach);
+    Coach save(Coach coach);
     void deleteById(long Id);
     void deleteByAccountId(long accountId);
     void deleteByAccount_Email(String email);

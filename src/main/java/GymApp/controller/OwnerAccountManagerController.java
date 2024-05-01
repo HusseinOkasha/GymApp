@@ -25,8 +25,6 @@ import java.util.List;
 @RequestMapping("api")
 public class OwnerAccountManagerController {
     @Autowired
-    private final AccountService accountService;
-    @Autowired
     private final OwnerService ownerService;
     @Autowired
     private final EncryptionService encryptionService;
@@ -34,9 +32,7 @@ public class OwnerAccountManagerController {
     private final Util util;
 
 
-    public OwnerAccountManagerController(AccountService accountService, OwnerService ownerService,
-                                         EncryptionService encryptionService, Util util) {
-        this.accountService = accountService;
+    public OwnerAccountManagerController(OwnerService ownerService, EncryptionService encryptionService, Util util) {
         this.ownerService = ownerService;
         this.encryptionService = encryptionService;
         this.util = util;
@@ -59,16 +55,11 @@ public class OwnerAccountManagerController {
         String EncryptedPassword = encryptionService.encryptString(password);
         newAccount.setPassword(EncryptedPassword);
 
-        Account dbAccount;
-        dbAccount = accountService.save(newAccount)
-                .orElseThrow(() -> new AccountCreationFailureException("failed to create the account in the database"));
-
         // save the account_id in the owner table
-        ownerService.save(new Owner(dbAccount))
-                .orElseThrow(() -> new AccountCreationFailureException("failed to create the account in the database"));
+        ownerService.save(new Owner(new Account(newAccount)));
 
         // return the account profile dto (without password).
-        return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(dbAccount);
+        return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);
     }
 
     // Get my profile details
