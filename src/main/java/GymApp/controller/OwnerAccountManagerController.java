@@ -56,8 +56,7 @@ public class OwnerAccountManagerController {
         newAccount.setPassword(EncryptedPassword);
 
         // save the account_id in the owner table
-        ownerService.save(new Owner(new Account(newAccount)))
-                .orElseThrow(() -> new AccountCreationFailureException("failed to create the account in the database"));
+        ownerService.save(new Owner(new Account(newAccount)));
 
         // return the account profile dto (without password).
         return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);

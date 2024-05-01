@@ -33,8 +33,8 @@ public class OwnerServiceImpl implements OwnerService{
     }
 
     @Override
-    public Optional<Owner> save(Owner owner) {
-        return Optional.of(ownerRepository.save(owner));
+    public Owner save(Owner owner) {
+        return ownerRepository.save(owner);
     }
 
     @Override
