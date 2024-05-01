@@ -12,11 +12,9 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -51,5 +49,22 @@ public class WorkoutController {
         // 5) convert the workout entity to workoutDto.
         return WorkoutMapper.workoutEntityToWorkoutDto(dbworkout);
     }
+
+    @GetMapping("/workouts")
+    @Validated
+    private List<WorkoutDto> getAllWorkouts(Authentication authentication) throws Exception {
+        // get the account from the database.
+        Optional<Account> accountFetchResult =
+                accountService.findByEmailOrPhoneNumber(authentication.getName(), authentication.getName()) ;
+        Account dbAccount = accountFetchResult.get();
+
+        // fetch all workouts which that account has using the account id
+        List<Workout> workouts = workoutService.findByAccountId(dbAccount.getId());
+
+        // convert workout entity to workoutDto.
+        return workouts.stream().map(WorkoutMapper::workoutEntityToWorkoutDto).toList();
+    }
+
+
 
 }
