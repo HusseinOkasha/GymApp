@@ -43,11 +43,11 @@ public class AccountWorkout {
     @EmbeddedId
     private Id id = new Id();
 
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY )
     @JoinColumn(name = "workout_id", insertable = false, updatable = false)
     private Workout workout;
 
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", insertable = false, updatable = false)
     private Account account;
 
@@ -58,6 +58,10 @@ public class AccountWorkout {
     private LocalDateTime updatedAt;
 
     public AccountWorkout() {
+    }
+
+    public AccountWorkout(Id id) {
+        this.id = id;
     }
 
     public AccountWorkout(Id id, Account account, Workout workout){
@@ -76,6 +80,38 @@ public class AccountWorkout {
 
     public void setId(Id id) {
         this.id = id;
+    }
+
+    public Workout getWorkout() {
+        return workout;
+    }
+
+    public void setWorkout(Workout workout) {
+        this.workout = workout;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     @PrePersist

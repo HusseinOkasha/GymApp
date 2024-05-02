@@ -25,6 +25,11 @@ public class AccountWorkoutServiceImpl implements AccountWorkoutService {
     }
 
     @Override
+    public Optional<AccountWorkout> findByAccountIdAndWorkoutId(long accountId, long workoutId) {
+        return accountWorkoutRepository.findByAccountIdAndWorkoutId(accountId, workoutId);
+    }
+
+    @Override
     public AccountWorkout save(AccountWorkout accountWorkout) {
         return accountWorkoutRepository.save(accountWorkout);
     }
