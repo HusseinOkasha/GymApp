@@ -2,13 +2,17 @@ package GymApp.controller;
 
 import GymApp.dto.WorkoutDto;
 import GymApp.entity.AccountWorkout;
+import GymApp.entity.Exercise;
 import GymApp.entity.Workout;
+import GymApp.exception.WorkoutNotFoundException;
 import GymApp.service.AccountService;
 import GymApp.service.AccountWorkoutService;
 import GymApp.service.WorkoutService;
+import GymApp.util.entityAndDtoMappers.ExerciseMapper;
 import GymApp.util.entityAndDtoMappers.WorkoutMapper;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
@@ -83,5 +87,44 @@ public class WorkoutController {
         // 4) convert workout entity to workoutDto.
         return WorkoutMapper.workoutEntityToWorkoutDto(dbWorkout);
     }
+
+    @Validated
+    @PutMapping("/workouts/{workoutId}")
+    public WorkoutDto updateWorkoutById(@PathVariable long workoutId, @Valid @RequestBody WorkoutDto workoutDto,
+                                        Authentication authentication) throws Exception {
+        // get the account_id from the authentication object.
+        long accountId = Long.parseLong(authentication.getName());
+
+        // check if this workout belongs to that user
+        Optional<AccountWorkout> accountWorkoutFetchResult =
+                accountWorkoutService.findByAccountIdAndWorkoutId(accountId, workoutId);
+
+        // in case it doesn't belong to that user throw access denied exception.
+        accountWorkoutFetchResult.orElseThrow(()-> new AccessDeniedException("you can't access this workout"));
+
+        // in case it does belong to that user.
+        // fetch the workout from the database.
+        Optional<Workout> workoutFetchResult = workoutService.findById(workoutId);
+
+        // in case the workout doesn't exist throw workout not found exception with NOT_FOUND status code.
+        Workout dbWorkout = workoutFetchResult
+                .orElseThrow(()-> new WorkoutNotFoundException("no workout found with id: " + workoutId));
+
+        // reflect the updates to the fetched entity.
+        dbWorkout.setName(workoutDto.name());
+
+        // convert exercises dto to exercise entity
+        List<Exercise> exercises = workoutDto.exercises().stream()
+                .map(ExerciseMapper::exerciseDtoToExerciseEntity).toList();
+        dbWorkout.getExercises().clear();
+        dbWorkout.getExercises().addAll(exercises);
+
+        // save the updated entity.
+        dbWorkout = workoutService.save(dbWorkout);
+
+        // convert the save workout entity to workoutDto.
+        return WorkoutMapper.workoutEntityToWorkoutDto(dbWorkout);
+    }
+
 
 }
