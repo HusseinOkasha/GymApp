@@ -126,5 +126,24 @@ public class WorkoutController {
         return WorkoutMapper.workoutEntityToWorkoutDto(dbWorkout);
     }
 
+    @Validated
+    @DeleteMapping("/workouts/{workoutId}")
+    public void deleteWorkoutById(@PathVariable long workoutId, Authentication authentication){
+        // get the account id from the authentication object.
+        long accountId = Long.parseLong(authentication.getName());
+
+        // check if that workout belongs to that user
+        Optional<AccountWorkout>accountWorkoutFetchResult =
+                accountWorkoutService.findByAccountIdAndWorkoutId(accountId, workoutId);
+
+        // throw Access denied exception in case the workout doesn't belong to the user
+        AccountWorkout dbAccountWorkout = accountWorkoutFetchResult.orElseThrow(()-> new AccessDeniedException(""));
+
+        // in case the workout does belong to the user, delete it.
+        accountWorkoutService.deleteById(new AccountWorkout.Id(workoutId, accountId));
+
+        workoutService.deleteById(workoutId);
+    }
+
 
 }

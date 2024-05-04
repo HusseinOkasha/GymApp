@@ -28,7 +28,7 @@ public class Workout {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "workout")
+    @OneToMany(mappedBy = "workout", fetch = FetchType.LAZY)
     private Set<AccountWorkout> accountWorkouts = new HashSet<>();
 
     @ElementCollection
