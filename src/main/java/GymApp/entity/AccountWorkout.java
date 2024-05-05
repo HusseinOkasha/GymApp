@@ -1,7 +1,8 @@
 package GymApp.entity;
 
+import GymApp.enums.WorkoutAccessType;
 import jakarta.persistence.*;
-import org.hibernate.annotations.SecondaryRow;
+
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -22,7 +23,7 @@ public class AccountWorkout {
 
         public Id(){}
 
-        public Id(Long workoutId, Long accountId) {
+        public Id(Long accountId, Long workoutId) {
             this.workoutId = workoutId;
             this.accountId = accountId;
         }
@@ -51,28 +52,16 @@ public class AccountWorkout {
     @JoinColumn(name = "account_id", insertable = false, updatable = false)
     private Account account;
 
+    @Column(name="access_type", nullable = false)
+    private WorkoutAccessType accessType;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public AccountWorkout() {
-    }
-
-    public AccountWorkout(Id id) {
-        this.id = id;
-    }
-
-    public AccountWorkout(Id id, Account account, Workout workout){
-        this.id = id;
-        this.account = account;
-        this.workout = workout;
-        this.id.accountId = account.getId();
-        this.id.workoutId = workout.getId();
-        account.getAccountWorkouts().add(this);
-        workout.getAccountWorkouts().add(this);
-    }
+    private AccountWorkout() {}
 
     public Id getId() {
         return id;
@@ -113,6 +102,59 @@ public class AccountWorkout {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public static class Builder {
+        private Id id;
+        private Workout workout;
+        private Account account;
+        private WorkoutAccessType accessType;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
+        public Builder() {
+        }
+        public Builder id(Id id){
+            this.id = id;
+            return this;
+        }
+        public Builder workout(Workout workout) {
+            this.workout = workout;
+            return this;
+        }
+
+        public Builder account(Account account) {
+            this.account = account;
+            return this;
+        }
+
+        public Builder accessType(WorkoutAccessType accessType) {
+            this.accessType = accessType;
+            return this;
+        }
+
+        public Builder createdAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
+        public Builder updatedAt(LocalDateTime updatedAt) {
+            this.updatedAt = updatedAt;
+            return this;
+        }
+
+        public AccountWorkout build() {
+            AccountWorkout accountWorkout = new AccountWorkout();
+            accountWorkout.id = this.id;
+            accountWorkout.workout = this.workout;
+            accountWorkout.account = this.account;
+            accountWorkout.accessType = this.accessType;
+            accountWorkout.createdAt = this.createdAt;
+            accountWorkout.updatedAt = this.updatedAt;
+            return accountWorkout;
+        }
+    }
+
+
 
     @PrePersist
     public void onCreate() {

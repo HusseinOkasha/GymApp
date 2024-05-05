@@ -4,6 +4,7 @@ import GymApp.dto.WorkoutDto;
 import GymApp.entity.AccountWorkout;
 import GymApp.entity.Exercise;
 import GymApp.entity.Workout;
+import GymApp.enums.WorkoutAccessType;
 import GymApp.exception.WorkoutNotFoundException;
 import GymApp.service.AccountService;
 import GymApp.service.AccountWorkoutService;
@@ -12,7 +13,6 @@ import GymApp.util.entityAndDtoMappers.ExerciseMapper;
 import GymApp.util.entityAndDtoMappers.WorkoutMapper;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
@@ -36,21 +36,27 @@ public class WorkoutController {
 
     @PostMapping("/workouts")
     @Validated
-    public WorkoutDto createWorkout(@RequestBody @Valid WorkoutDto workoutDto, Authentication authentication) throws Exception {
-        // 1) convert createWorkoutDto to "workout" entity
+    public WorkoutDto createWorkout(@RequestBody @Valid WorkoutDto workoutDto,
+                                    Authentication authentication) throws Exception {
+
+        // convert WorkoutDto to "workout" entity
         Workout workout = WorkoutMapper.workoutDtoToWorkoutEntity(workoutDto);
 
-        // 2) save the workout to the database.
+        // save the workout to the database.
         Workout dbworkout = workoutService.save(workout);
 
-        // 3) get the account id from the authentication object.
+        // get the account id from the authentication object.
         long accountId = Long.parseLong(authentication.getName());
 
-        // 4) create account_workout entity(link).
-        AccountWorkout accountWorkout = new AccountWorkout(new AccountWorkout.Id(workout.getId(), accountId));
+        // create account_workout entity(link).
+        AccountWorkout.Builder accountWorkoutBuilder = new AccountWorkout.Builder();
+        AccountWorkout accountWorkout = accountWorkoutBuilder.id(new AccountWorkout.Id(accountId, dbworkout.getId()))
+                .accessType(WorkoutAccessType.WRITE).build();
+
+        // save the account workout to the database.
         accountWorkoutService.save(accountWorkout);
 
-        // 5) convert the workout entity to workoutDto.
+        // convert the workout entity to workoutDto.
         return WorkoutMapper.workoutEntityToWorkoutDto(dbworkout);
     }
 
