@@ -144,17 +144,22 @@ public class WorkoutController {
         // get the account id from the authentication object.
         long accountId = Long.parseLong(authentication.getName());
 
-        // check if that workout belongs to that user
+        // check if the user can access this workout.
         Optional<AccountWorkout>accountWorkoutFetchResult =
                 accountWorkoutService.findByAccountIdAndWorkoutId(accountId, workoutId);
 
-        // throw Access denied exception in case the workout doesn't belong to the user
+        // in case the user has no access to the workout throw Access denied exception
         AccountWorkout dbAccountWorkout = accountWorkoutFetchResult.orElseThrow(()-> new AccessDeniedException(""));
 
-        // in case the workout does belong to the user, delete it.
-        accountWorkoutService.deleteById(new AccountWorkout.Id(workoutId, accountId));
-
-        workoutService.deleteById(workoutId);
+        // in case the user has READ access to the workout, just delete the link.
+        if(dbAccountWorkout.getAccessType() == WorkoutAccessType.READ){
+            accountWorkoutService.deleteById(new AccountWorkout.Id(accountId, workoutId));
+        }
+        else if(dbAccountWorkout.getAccessType() == WorkoutAccessType.WRITE){
+            // in case the user has WRITE  access to the workout, delete the workout itself
+            // note: by deleting the workout any associated link(account_workout) will be deleted as well.
+            workoutService.deleteById(workoutId);
+        }
     }
 
 
