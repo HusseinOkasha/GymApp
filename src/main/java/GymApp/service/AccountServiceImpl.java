@@ -43,8 +43,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Optional<Account> save(Account account) {
-        return Optional.of(accountRepository.save(account));
+    public Account save(Account account) {
+        return accountRepository.save(account);
     }
 
     @Override

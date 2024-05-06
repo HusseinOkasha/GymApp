@@ -57,9 +57,7 @@ public class CoachAccountManagerController {
         newAccount.setPassword(EncryptedPassword);
 
         // save the account_id in the owner table
-        coachService.save(new Coach(newAccount)).orElseThrow(
-                () -> new AccountCreationFailureException("failed to create the account in the database")
-        );
+        coachService.save(new Coach(newAccount));
 
         // return the account profile dto (without password).
         return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);

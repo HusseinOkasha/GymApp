@@ -28,7 +28,7 @@ public class EntityAndDtoConverters {
     public static Account convertCreateAccountDtoToAccountEntity(CreateAccountDto createAccountDto){
         Account account = new Account();
         account.setFirstName(createAccountDto.firstName());
-        account.setSecondName(createAccountDto.SecondName());
+        account.setSecondName(createAccountDto.secondName());
         account.setThirdName(createAccountDto.thirdName());
         account.setEmail(createAccountDto.email());
         account.setPassword(createAccountDto.password());
