@@ -103,6 +103,14 @@ public class AccountWorkout {
         this.updatedAt = updatedAt;
     }
 
+    public WorkoutAccessType getAccessType() {
+        return accessType;
+    }
+
+    public void setAccessType(WorkoutAccessType accessType) {
+        this.accessType = accessType;
+    }
+
     public static class Builder {
         private Id id;
         private Workout workout;

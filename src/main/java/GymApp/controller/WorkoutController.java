@@ -101,14 +101,20 @@ public class WorkoutController {
         // get the account_id from the authentication object.
         long accountId = Long.parseLong(authentication.getName());
 
-        // check if this workout belongs to that user
+        // check if this user can access this workout.
         Optional<AccountWorkout> accountWorkoutFetchResult =
                 accountWorkoutService.findByAccountIdAndWorkoutId(accountId, workoutId);
 
-        // in case it doesn't belong to that user throw access denied exception.
-        accountWorkoutFetchResult.orElseThrow(()-> new AccessDeniedException("you can't access this workout"));
+        // in case he can't access this workout throw access denied exception.
+        AccountWorkout accountWorkout = accountWorkoutFetchResult.orElseThrow(
+                ()-> new AccessDeniedException("you can't access this workout")
+        );
 
-        // in case it does belong to that user.
+        // check if he can update the workout.
+        if(accountWorkout.getAccessType() == WorkoutAccessType.READ){
+            throw new AccessDeniedException("you can't update this workout.");
+        }
+
         // fetch the workout from the database.
         Optional<Workout> workoutFetchResult = workoutService.findById(workoutId);
 
