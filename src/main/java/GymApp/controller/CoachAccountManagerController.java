@@ -57,7 +57,9 @@ public class CoachAccountManagerController {
         newAccount.setPassword(EncryptedPassword);
 
         // save the account_id in the owner table
-        coachService.save(new Coach(newAccount));
+        Coach.Builder coachBuilder = new Coach.Builder();
+        Coach coach  = coachBuilder.account(newAccount).build();
+        coachService.save(coach);
 
         // return the account profile dto (without password).
         return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);

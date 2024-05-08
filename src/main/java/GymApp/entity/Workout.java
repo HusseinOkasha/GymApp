@@ -35,13 +35,7 @@ public class Workout {
     @CollectionTable(name = "exercise", joinColumns = @JoinColumn(name = "workout_id"))
     private List<Exercise> exercises =  new ArrayList<>();
 
-    public Workout(){}
-
-    public Workout(String name, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.name = name;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
+    private Workout(){}
 
     public long getId() {
         return id;
@@ -91,6 +85,55 @@ public class Workout {
         this.accountWorkouts = accountWorkouts;
     }
 
+    public static class Builder{
+        private long id;
+        private String name;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+        private Set<AccountWorkout>accountWorkouts;
+        private List<Exercise>exercises;
+
+        public Builder(){}
+
+        public Builder id(long id){
+            this.id = id;
+            return this;
+        }
+        public Builder name(String name){
+            this.name = name;
+            return this;
+        }
+        public Builder createdAt(LocalDateTime createdAt){
+            this.createdAt = createdAt;
+            return this;
+        }
+        public Builder updatedAt(LocalDateTime updatedAt){
+            this.updatedAt = updatedAt;
+            return this;
+        }
+        public Builder accountWorkouts(Set<AccountWorkout> accountWorkouts){
+            this.accountWorkouts = accountWorkouts;
+            return this;
+        }
+        public Builder exercises(List<Exercise> exercises){
+            this.exercises = exercises;
+            return this;
+        }
+        public Workout build(){
+            Workout workout = new Workout();
+            workout.id = this.id;
+            workout.name = this.name;
+            workout.createdAt = this.createdAt;
+            workout.updatedAt = this.updatedAt;
+            workout.accountWorkouts =this.accountWorkouts;
+            workout.exercises = this.exercises;
+
+            return workout;
+        }
+
+
+    }
+
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();
@@ -101,8 +144,6 @@ public class Workout {
     public void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
-
 
     @Override
     public String toString() {

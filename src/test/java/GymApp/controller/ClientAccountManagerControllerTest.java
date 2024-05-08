@@ -4,6 +4,7 @@ import GymApp.dto.*;
 import GymApp.entity.Account;
 import GymApp.entity.Client;
 import GymApp.entity.Owner;
+import GymApp.service.AccountService;
 import GymApp.service.ClientService;
 import GymApp.service.OwnerService;
 import com.github.dockerjava.zerodep.shaded.org.apache.commons.codec.binary.Base64;
@@ -22,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -31,13 +33,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = { "spring.datasource.url=jdbc:tc:postgres:latest:///database", "spring.sql.init.mode=always" })
+        properties = { "spring.datasource.url=jdbc:tc:postgres:latest:///db", "spring.sql.init.mode=always" })
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class ClientAccountManagerControllerTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:latest")
-            .withDatabaseName("database").withUsername("myuser");
+            .withDatabaseName("db").withUsername("myuser");
 
     private static String ownerToken;
     private static String clientToken;
@@ -51,23 +53,47 @@ class ClientAccountManagerControllerTest {
     @Autowired
     OwnerService ownerService;
 
+    @Autowired
+    AccountService accountService;
+
     @LocalServerPort
     private int port;
 
     @BeforeAll
     static void generalSetUp(){
+
         // "123" encoded with bCrypt
         String bCryptPassword = "$2a$12$fdQCjXHktjZczz5hlHg77u8bIXUQdzGQf5k7ulN.cxzhW2vidHzSu";
 
         // Create 2 accounts
-        Account acc1 = new Account("f1", "s1", "t1","e1@gmail.com", "1",
-                bCryptPassword, null, null);
-        Account acc2 = new Account("f2", "s2", "t2","e2@gmail.com", "2",
-                bCryptPassword, null, null);
+        Account.Builder accountBuilder  = new Account.Builder();
+        Account acc1 = accountBuilder
+                .firstName("f1")
+                .secondName("s1")
+                .thirdName("t1")
+                .email("e1@gmail.com")
+                .phoneNumber("1")
+                .password(bCryptPassword)
+                .build();
+
+        Account acc2 = accountBuilder
+                .firstName("f2")
+                .secondName("s2")
+                .thirdName("t2")
+                .email("e2@gmail.com")
+                .phoneNumber("2")
+                .password(bCryptPassword)
+                .build();
 
         // this account will be used as an owner account.
-        Account acc3 = new Account("f3", "s3", "t3","e3@gmail.com", "3",
-                bCryptPassword, null, null);
+        Account acc3 = accountBuilder
+                .firstName("f3")
+                .secondName("s3")
+                .thirdName("t3")
+                .email("e3@gmail.com")
+                .phoneNumber("3")
+                .password(bCryptPassword)
+                .build();
 
         // add newly created accounts to the client accounts list.
         clientAccounts.add(acc1);
@@ -83,14 +109,31 @@ class ClientAccountManagerControllerTest {
         clientService.deleteAll();
         ownerService.deleteAll();
 
+
         // Make them client accounts.
-        Client client1 = new Client(new Account(clientAccounts.get(0)), LocalDate.of(2024,3,1));
-        Client client2 = new Client(new Account(clientAccounts.get(1)), LocalDate.of(2024,3,1));
+        Client.Builder clientBuilder = new Client.Builder();
+        Account.Builder accountBuilder = new Account.Builder();
+        Client client1 = clientBuilder
+                .account(
+                        accountBuilder.copyFrom(clientAccounts.get(0)).build()
+                )
+                .birthDate(LocalDate.of(2024,3,1))
+                .build();
+        Client client2 = clientBuilder
+                .account(
+                        accountBuilder.copyFrom(clientAccounts.get(1)).build()
+                )
+                .birthDate(LocalDate.of(2024,3,1))
+                .build();
         clientService.save(client1);
         clientService.save(client2);
 
         // create owner account.
-        ownerService.save(new Owner(new Account(ownerAccounts.get(0))));
+        Owner.Builder ownerBuilder = new Owner.Builder();
+        Owner owner = ownerBuilder
+                .account(ownerAccounts.get(0))
+                .build();
+        ownerService.save(owner);
 
         // get token as a result of client login
         clientToken = login("1", "123",

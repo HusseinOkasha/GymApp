@@ -9,7 +9,6 @@ import java.util.List;
 public class WorkoutMapper {
 
     public static Workout workoutDtoToWorkoutEntity(WorkoutDto workoutDto){
-        Workout workout =  new Workout(workoutDto.name(), null, null);
         List<Exercise> exercises =
         workoutDto
                 .exercises()
@@ -17,8 +16,10 @@ public class WorkoutMapper {
                 .map(ExerciseMapper::exerciseDtoToExerciseEntity)
                 .toList();
 
+        Workout.Builder workoutBuilder = new Workout.Builder();
+        Workout workout = workoutBuilder.name(workoutDto.name())
+                        .exercises(exercises).build();
         workout.setExercises(exercises);
-
         return workout;
     }
 

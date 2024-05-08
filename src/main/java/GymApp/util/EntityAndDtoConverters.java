@@ -18,22 +18,26 @@ public class EntityAndDtoConverters {
     }
 
     public static Account convertAccountProfileDtoToAccountEntity(AccountProfileDto accountProfileDto) {
-        Account account = new Account(accountProfileDto.firstName(), accountProfileDto.SecondName(), accountProfileDto.thirdName(),
-                accountProfileDto.email(), accountProfileDto.phoneNumber(), null, accountProfileDto.createdAt(),
-                accountProfileDto.updatedAt()
-        );
-        return account;
+        Account.Builder accountBuilder = new Account.Builder();
+        return accountBuilder.firstName(accountProfileDto.firstName())
+                .secondName(accountProfileDto.SecondName())
+                .thirdName(accountProfileDto.thirdName())
+                .email(accountProfileDto.email())
+                .phoneNumber(accountProfileDto.phoneNumber())
+                .createdAt(accountProfileDto.createdAt())
+                .updateAt(accountProfileDto.updatedAt())
+                .build();
     }
 
     public static Account convertCreateAccountDtoToAccountEntity(CreateAccountDto createAccountDto){
-        Account account = new Account();
-        account.setFirstName(createAccountDto.firstName());
-        account.setSecondName(createAccountDto.secondName());
-        account.setThirdName(createAccountDto.thirdName());
-        account.setEmail(createAccountDto.email());
-        account.setPassword(createAccountDto.password());
-        account.setPhoneNumber(createAccountDto.phoneNumber());
-        return account;
+        Account.Builder accountBuilder = new Account.Builder();
+        return accountBuilder.firstName(createAccountDto.firstName())
+                .secondName(createAccountDto.secondName())
+                .thirdName(createAccountDto.thirdName())
+                .email(createAccountDto.email())
+                .phoneNumber(createAccountDto.phoneNumber())
+                .password(createAccountDto.password())
+                .build();
     }
 
     public static ClientAccountProfileDto convertClientEntityToClientAccountProfileDto(Client client) {

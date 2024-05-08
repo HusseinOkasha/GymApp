@@ -34,32 +34,7 @@ public class Account {
     @OneToMany(mappedBy = "account")
     private Set<AccountWorkout> accountWorkouts = new HashSet<>();
 
-
-    public Account() {
-    }
-
-
-    public Account(String firstName, String secondName, String thirdName, String email, String phoneNumber,
-                   String password, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.firstName = firstName;
-        this.secondName = secondName;
-        this.thirdName = thirdName;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
-        this.password = password;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
-    public Account(Account account){
-        this.firstName = account.getFirstName();
-        this.secondName = account.getSecondName();
-        this.thirdName = account.getThirdName();
-        this.email = account.getEmail();
-        this.phoneNumber = account.getPhoneNumber();
-        this.password = account.getPassword();
-        this.createdAt = account.getCreatedAt();
-        this.updatedAt = account.getUpdatedAt();
+    private Account() {
     }
 
     public long getId() {
@@ -140,6 +115,91 @@ public class Account {
 
     public void setAccountWorkouts(Set<AccountWorkout> accountWorkouts) {
         this.accountWorkouts = accountWorkouts;
+    }
+
+    public static class Builder{
+
+        private long id;
+        private String firstName;
+        private String secondName;
+        private String thirdName;
+        private String email;
+        private String phoneNumber;
+        private String password;
+        private Set<AccountWorkout> accountWorkouts;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
+        public Builder(){}
+
+        public Builder id(long id ){
+            this.id = id;
+            return this;
+        }
+        public Builder firstName(String firstName ){
+            this.firstName = firstName;
+            return this;
+        }
+        public Builder secondName(String secondName ){
+            this.secondName = secondName;
+            return this;
+        }
+
+        public Builder thirdName(String  thirdName ){
+            this.thirdName = thirdName;
+            return this;
+        }
+        public Builder email(String email){
+            this.email = email;
+            return this;
+        }
+        public Builder phoneNumber(String phoneNumber){
+            this.phoneNumber = phoneNumber;
+            return this;
+        }
+        public Builder password(String  password ){
+            this.password = password;
+            return this;
+        }
+        public Builder accountWorkouts(Set<AccountWorkout> accountWorkouts ){
+            this.accountWorkouts = accountWorkouts;
+            return this;
+        }
+        public Builder createdAt(LocalDateTime  createdAt ){
+            this.createdAt = createdAt;
+            return this;
+        }
+        public Builder updateAt(LocalDateTime  updatedAt ){
+            this.updatedAt = updatedAt;
+            return this;
+        }
+        public Builder copyFrom(Account account){
+            this.id = account.id;
+            this.firstName = account.firstName;
+            this.secondName = account.secondName;
+            this.thirdName = account.thirdName;
+            this.email = account.email;
+            this.phoneNumber = account.phoneNumber;
+            this.password = account.password;
+            this.updatedAt = account.updatedAt;
+            this.createdAt = account.createdAt;
+            return this;
+        }
+        public Account build(){
+            Account account = new Account();
+            account.id = this.id;
+            account.firstName = this.firstName;
+            account.secondName = this.secondName;
+            account.thirdName = this.thirdName;
+            account.email = this.email;
+            account.phoneNumber = this.phoneNumber;
+            account.password = this.password;
+            account.accountWorkouts = this.accountWorkouts;
+            account.createdAt = this.createdAt;
+            account.updatedAt = this.updatedAt;
+            return account;
+        }
+
     }
 
     @PrePersist

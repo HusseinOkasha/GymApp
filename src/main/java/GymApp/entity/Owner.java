@@ -13,12 +13,8 @@ public class Owner {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "account_id", referencedColumnName = "id", nullable = false)
     private Account account;
-    public Owner (){
 
-    }
-    public Owner(Account account) {
-        this.account = account;
-    }
+    private Owner (){}
 
     public long getId() {
         return id;
@@ -35,6 +31,32 @@ public class Owner {
     public void setAccount(Account account) {
         this.account = account;
     }
+
+    public static class Builder{
+
+        private  long id;
+        private Account account;
+
+        public Builder(){}
+
+        public Builder id(long id){
+            this.id = id;
+            return this;
+        }
+        public Builder account(Account account){
+            Account.Builder accountBuilder = new Account.Builder();
+            this.account = accountBuilder.copyFrom(account).build();
+            return this;
+        }
+        public Owner build(){
+            Owner owner =  new Owner();
+            owner.id = this.id;
+            owner.account = this.account;
+            return owner;
+        }
+
+    }
+
 
     @Override
     public String toString() {

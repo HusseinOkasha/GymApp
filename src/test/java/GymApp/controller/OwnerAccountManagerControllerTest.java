@@ -66,10 +66,23 @@ class OwnerAccountManagerControllerTest {
         String bCryptPassword = "$2a$12$fdQCjXHktjZczz5hlHg77u8bIXUQdzGQf5k7ulN.cxzhW2vidHzSu";
 
         // Create 2 accounts
-        Account acc1 = new Account("f1", "s1", "t1","e1@gmail.com", "1",
-                bCryptPassword, null, null);
-        Account acc2 = new Account("f2", "s2", "t2","e2@gmail.com", "2",
-                bCryptPassword, null, null);
+        Account.Builder accountBuilder  = new Account.Builder();
+        Account acc1 = accountBuilder
+                .firstName("f1")
+                .secondName("s1")
+                .thirdName("t1")
+                .email("e1@gmail.com")
+                .phoneNumber("1")
+                .password(bCryptPassword)
+                .build();
+        Account acc2 = accountBuilder
+                .firstName("f2")
+                .secondName("s2")
+                .thirdName("t2")
+                .email("e2@gmail.com")
+                .phoneNumber("2")
+                .password(bCryptPassword)
+                .build();
 
         // add newly created accounts to the accounts list.
         accounts.add(acc1);
@@ -84,8 +97,10 @@ class OwnerAccountManagerControllerTest {
 
 
         // Make them owner accounts.
-        Owner owner1 = new Owner(new Account(accounts.get(0)));
-        Owner owner2 = new Owner(new Account(accounts.get(1)));
+        Owner.Builder ownerBuilder = new Owner.Builder();
+
+        Owner owner1 = ownerBuilder.account(accounts.get(0)).build();
+        Owner owner2 = ownerBuilder.account(accounts.get(1)).build();
         ownerService.save(owner1);
         ownerService.save(owner2);
 

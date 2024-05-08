@@ -14,16 +14,9 @@ public class Coach {
     @JoinColumn(name = "account_id", referencedColumnName = "id", nullable = false)
     private Account account;
 
-    public Coach() {
-    }
-    public Coach(Account account) {
-        this.account = account;
+    private Coach() {
     }
 
-    public Coach(long id, Account account) {
-        this.id = id;
-        this.account = account;
-    }
 
     public long getId() {
         return id;
@@ -39,6 +32,30 @@ public class Coach {
 
     public void setAccount(Account account) {
         this.account = account;
+    }
+
+    public static class Builder {
+        private long id;
+        private Account account;
+
+        public Builder id(long id){
+            this.id = id;
+            return this;
+        }
+
+        public Builder account(Account account){
+            Account.Builder accountBuilder = new Account.Builder();
+            this.account = accountBuilder.copyFrom(account).build();
+            return this;
+        }
+
+        public Coach build(){
+            Coach coach = new Coach();
+            coach.id = this.id;
+            coach.account = this.account;
+            return coach;
+        }
+
     }
 
     @Override

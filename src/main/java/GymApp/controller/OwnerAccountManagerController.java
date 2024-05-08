@@ -56,7 +56,9 @@ public class OwnerAccountManagerController {
         newAccount.setPassword(EncryptedPassword);
 
         // save the account_id in the owner table
-        ownerService.save(new Owner(new Account(newAccount)));
+        Owner.Builder ownerBuilder = new Owner.Builder();
+        Owner owner = ownerBuilder.account(newAccount).build();
+        ownerService.save(owner);
 
         // return the account profile dto (without password).
         return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);

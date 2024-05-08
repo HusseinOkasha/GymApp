@@ -14,6 +14,7 @@ public interface AccountService {
       Optional<Account>findByEmailOrPhoneNumber(String email, String phoneNumber);
       Account save(Account account);
       void deleteById(long Id);
+      void deleteAll();
       void deleteByEmail(String email);
       void deleteByPhoneNumber(String phoneNumber);
 

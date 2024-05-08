@@ -56,8 +56,11 @@ public class ClientAccountManagerController {
         newAccount.setPassword(EncryptedPassword);
 
         // create new client and set it's birthDate
-        Client newClient  = new Client(newAccount);
-        newClient.setBirthDate(createClientAccountDto.birthDate());
+        Client.Builder clientBuilder = new Client.Builder();
+        Client newClient = clientBuilder
+                .account(newAccount)
+                .birthDate(createClientAccountDto.birthDate())
+                .build();
 
         // save the account_id in the owner table
         Client dbClient = clientService.save(newClient);

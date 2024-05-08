@@ -24,7 +24,7 @@ public class Exercise {
     @JoinColumn(name="workout_id", updatable = false, insertable = false, nullable = false)
     private Workout workout;
 
-    public Exercise() {
+    private Exercise() {
     }
 
     public Exercise(String name, int sets, int reps, String notes) {
@@ -73,6 +73,48 @@ public class Exercise {
     public void setWorkout(Workout workout) {
         this.workout = workout;
     }
+
+    public static class Builder {
+
+        private String name;
+        private int sets;
+        private int reps;
+        private String notes;
+        private Workout workout;
+
+        public Builder(){}
+
+        public Builder name(String name){
+            this.name = name;
+            return this;
+        }
+        public Builder sets(int sets){
+            this.sets = sets;
+            return this;
+        }
+        public Builder reps(int reps){
+            this.reps = reps;
+            return this;
+        }
+        public Builder notes(String notes){
+            this.notes = notes;
+            return this;
+        }
+        public Builder workout(Workout workout){
+            this.workout = workout;
+            return  this;
+        }
+        public Exercise build(){
+            Exercise exercise = new Exercise();
+            exercise.name = this.name;
+            exercise.sets = this.sets;
+            exercise.reps = this.reps;
+            exercise.notes = this.notes;
+            exercise.workout = this.workout;
+            return exercise;
+        }
+    }
+
 
     @Override
     public boolean equals(Object o) {

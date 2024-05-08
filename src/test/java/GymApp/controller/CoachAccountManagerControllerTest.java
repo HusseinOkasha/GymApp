@@ -64,14 +64,33 @@ class CoachAccountManagerControllerTest {
         String bCryptPassword = "$2a$12$fdQCjXHktjZczz5hlHg77u8bIXUQdzGQf5k7ulN.cxzhW2vidHzSu";
 
         // Create 2 accounts
-        Account acc1 = new Account("f1", "s1", "t1","e1@gmail.com", "1",
-                bCryptPassword, null, null);
-        Account acc2 = new Account("f2", "s2", "t2","e2@gmail.com", "2",
-                bCryptPassword, null, null);
+        Account.Builder accountBuilder  = new Account.Builder();
+        Account acc1 = accountBuilder
+                .firstName("f1")
+                .secondName("s1")
+                .thirdName("t1")
+                .email("e1@gmail.com")
+                .phoneNumber("1")
+                .password(bCryptPassword)
+                .build();
+        Account acc2 = accountBuilder
+                .firstName("f2")
+                .secondName("s2")
+                .thirdName("t2")
+                .email("e2@gmail.com")
+                .phoneNumber("2")
+                .password(bCryptPassword)
+                .build();
 
         // this account will be used as an owner account.
-        Account acc3 = new Account("f3", "s3", "t3","e3@gmail.com", "3",
-                bCryptPassword, null, null);
+        Account acc3 = accountBuilder
+                .firstName("f3")
+                .secondName("s3")
+                .thirdName("t3")
+                .email("e3@gmail.com")
+                .phoneNumber("3")
+                .password(bCryptPassword)
+                .build();
 
         // add newly created accounts to the coach accounts list.
         coachAccounts.add(acc1);
@@ -89,13 +108,23 @@ class CoachAccountManagerControllerTest {
         ownerService.deleteAll();
 
         // Make them coach accounts.
-        Coach coach1 = new Coach(new Account(coachAccounts.get(0)));
-        Coach coach2 = new Coach(new Account(coachAccounts.get(1)));
+        Account.Builder accountBuilder = new Account.Builder();
+        Coach.Builder coachBuilder = new Coach.Builder();
+        Coach coach1 = coachBuilder
+                .account(
+                        accountBuilder.copyFrom(coachAccounts.get(0)).build()
+                ).build();
+                //new Coach(new Account(coachAccounts.get(0)));
+        Coach coach2 = coachBuilder
+                .account(
+                        accountBuilder.copyFrom(coachAccounts.get(1)).build()
+                ).build();
         coachService.save(coach1);
         coachService.save(coach2);
 
         // create owner account.
-        ownerService.save(new Owner(new Account(ownerAccounts.get(0))));
+        Owner.Builder ownerBuilder = new Owner.Builder();
+        ownerService.save(ownerBuilder.account(ownerAccounts.get(0)).build());
 
         // get token as a result of coach login
         coachToken = login("1", "123",

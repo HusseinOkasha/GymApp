@@ -53,6 +53,12 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public void deleteAll() {
+        accountRepository.deleteAll();
+    }
+
+
+    @Override
     public void deleteByEmail(String email) {
         accountRepository.deleteByEmail(email);
     }
