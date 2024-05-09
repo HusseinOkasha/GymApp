@@ -35,7 +35,7 @@ public class Workout {
     @CollectionTable(name = "exercise", joinColumns = @JoinColumn(name = "workout_id"))
     private List<Exercise> exercises =  new ArrayList<>();
 
-    private Workout(){}
+    public Workout(){}
 
     public long getId() {
         return id;
@@ -112,11 +112,11 @@ public class Workout {
             return this;
         }
         public Builder accountWorkouts(Set<AccountWorkout> accountWorkouts){
-            this.accountWorkouts = accountWorkouts;
+            this.accountWorkouts = new HashSet<>(accountWorkouts);
             return this;
         }
         public Builder exercises(List<Exercise> exercises){
-            this.exercises = exercises;
+            this.exercises = new ArrayList<>(exercises);
             return this;
         }
         public Workout build(){

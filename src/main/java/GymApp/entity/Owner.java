@@ -14,7 +14,7 @@ public class Owner {
     @JoinColumn(name = "account_id", referencedColumnName = "id", nullable = false)
     private Account account;
 
-    private Owner (){}
+    public Owner (){}
 
     public long getId() {
         return id;

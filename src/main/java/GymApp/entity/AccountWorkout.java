@@ -61,7 +61,7 @@ public class AccountWorkout {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    private AccountWorkout() {}
+    public AccountWorkout() {}
 
     public Id getId() {
         return id;

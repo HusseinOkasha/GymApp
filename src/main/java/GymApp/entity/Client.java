@@ -20,7 +20,7 @@ public class Client {
     @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
 
-    private Client(){}
+    public Client(){}
 
     public long getId() {
         return id;

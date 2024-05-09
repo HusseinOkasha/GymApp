@@ -31,10 +31,10 @@ public class Account {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "account")
+    @OneToMany(mappedBy = "account", cascade = CascadeType.REMOVE)
     private Set<AccountWorkout> accountWorkouts = new HashSet<>();
 
-    private Account() {
+    public Account() {
     }
 
     public long getId() {
@@ -162,7 +162,7 @@ public class Account {
             return this;
         }
         public Builder accountWorkouts(Set<AccountWorkout> accountWorkouts ){
-            this.accountWorkouts = accountWorkouts;
+            this.accountWorkouts = new HashSet<>(accountWorkouts);
             return this;
         }
         public Builder createdAt(LocalDateTime  createdAt ){

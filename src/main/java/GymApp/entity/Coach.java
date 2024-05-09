@@ -14,7 +14,7 @@ public class Coach {
     @JoinColumn(name = "account_id", referencedColumnName = "id", nullable = false)
     private Account account;
 
-    private Coach() {
+    public Coach() {
     }
 
 

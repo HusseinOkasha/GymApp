@@ -24,7 +24,7 @@ public class Exercise {
     @JoinColumn(name="workout_id", updatable = false, insertable = false, nullable = false)
     private Workout workout;
 
-    private Exercise() {
+    public Exercise() {
     }
 
     public Exercise(String name, int sets, int reps, String notes) {
