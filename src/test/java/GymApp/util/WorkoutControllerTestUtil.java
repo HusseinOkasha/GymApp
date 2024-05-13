@@ -130,7 +130,8 @@ public class WorkoutControllerTestUtil {
         assertThat(underTestWorkoutDtos).isNotNull();
         assertThat(underTestWorkoutDtos.size()).isEqualTo(expectedWorkoutDto.size());
 
-        assertThat(underTestWorkoutDtos).isIn(expectedWorkoutDto);
+        underTestWorkoutDtos.forEach((e)-> assertThat(e).isIn(expectedWorkoutDto));
+
 
     }
     static public ResponseEntity<List<WorkoutDto>> attemptGetAllWorkouts(String token, int port, RestTemplate restTemplate){
@@ -198,19 +199,56 @@ public class WorkoutControllerTestUtil {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(underTestWorkoutDto).isEqualTo(expectedWorkoutDto);
-
     }
+
     public static void shouldNotUpdateWorkoutById(String token, Workout workout, int port,RestTemplate restTemplate ){
 
         WorkoutDto expectedWorkoutDto = WorkoutMapper.workoutEntityToWorkoutDto(workout);
 
-        attemptUpdateWorkoutById(token, port, expectedWorkoutDto, restTemplate);
-        ResponseEntity<WorkoutDto>  response = WorkoutControllerTestUtil.attemptUpdateWorkoutById(token, port,
+        ResponseEntity<WorkoutDto>  response = attemptUpdateWorkoutById(token, port,
                 expectedWorkoutDto, restTemplate);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
 
+    }
+    static public ResponseEntity<WorkoutDto> attemptDeleteWorkoutById(String token, Workout workout, int port,
+                                                                      RestTemplate restTemplate){
+        // set up the request
+        // As port number as it's generated randomly.
+        String baseUrl = AuthUtil.getBaseUrl(port);
+
+        // set up the authentication header
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + token);
+        HttpEntity request = new HttpEntity<>( headers);
+
+        // send the request
+        try{
+            return restTemplate.exchange(baseUrl + "/workouts/" + workout.getId(),
+                    HttpMethod.DELETE, request, WorkoutDto.class);
+        }
+        catch (HttpClientErrorException e){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
 
     }
+    static public void shouldDeleteWorkoutById(String token,  Workout workout, int port, RestTemplate restTemplate){
+
+        ResponseEntity<WorkoutDto>  deleteWorkoutResponse = attemptDeleteWorkoutById(token, workout, port, restTemplate);
+        assertThat(deleteWorkoutResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<List<WorkoutDto>>  getAllWorkoutsResponse = attemptGetAllWorkouts(token,port, restTemplate);
+        List<WorkoutDto> allWorkouts = getAllWorkoutsResponse.getBody();
+        assertThat(WorkoutMapper.workoutEntityToWorkoutDto(workout)).isNotIn(allWorkouts);
+
+    }
+    static public void shouldNotDeleteWorkoutById(String token,  Workout workout, int port, RestTemplate restTemplate){
+        ResponseEntity<WorkoutDto>  deleteWorkoutResponse = attemptDeleteWorkoutById(token, workout, port, restTemplate);
+        assertThat(deleteWorkoutResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+
 
 }

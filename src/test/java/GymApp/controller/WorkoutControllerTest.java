@@ -321,18 +321,21 @@ class WorkoutControllerTest {
     @Test
     public void ownerShouldGetAllWorkout(){
         // this method tests "that owner can get all his workouts".
-        WorkoutControllerTestUtil.attemptGetAllWorkouts(ownerToken, port, restTemplate);
+        WorkoutControllerTestUtil.shouldGetAllWorkouts(List.of(ownerWorkout, commonWorkout), ownerToken, port,
+                restTemplate);
     }
 
     @Test
     public void coachShouldGetAllWorkout(){
         // this method tests "that coach can get all his workouts".
-        WorkoutControllerTestUtil.attemptGetAllWorkouts(coachToken, port, restTemplate);
+        WorkoutControllerTestUtil.shouldGetAllWorkouts(List.of(coachWorkout, commonWorkout), coachToken, port,
+                restTemplate);
     }
     @Test
     public void clientShouldGetAllWorkout(){
         // this method tests "that client can get all his workouts".
-        WorkoutControllerTestUtil.attemptGetAllWorkouts(clientToken, port, restTemplate);
+        WorkoutControllerTestUtil.shouldGetAllWorkouts(List.of(clientWorkout, commonWorkout), clientToken, port,
+                restTemplate);
     }
 
     @Test
@@ -421,6 +424,62 @@ class WorkoutControllerTest {
         // client has only read access to this workout.
         WorkoutControllerTestUtil.shouldNotUpdateWorkoutById(clientToken, commonWorkout, port, restTemplate);
     }
+    @Test
+    public void ownerShouldDeleteWorkoutById(){
+        // this method tests the ability of owner to delete any of his workouts by id
+        // if he has write access to the workout, then he can delete the workout itself.
+        // if he has read access to the workout, then he can delete the workout from his list of workouts (delete the link only).
+        WorkoutControllerTestUtil.shouldDeleteWorkoutById(ownerToken,  ownerWorkout,  port, restTemplate);
+    }
+
+    @Test
+    public void coachShouldDeleteWorkoutById(){
+        // this method tests the ability of coach to delete any of his workouts by id
+        // if he has write access to the workout, then he can delete the workout itself.
+        // if he has read access to the workout, then he can delete the workout from his list of workouts (delete the link only).
+        WorkoutControllerTestUtil.shouldDeleteWorkoutById(coachToken, coachWorkout, port, restTemplate);
+    }
+    @Test
+    public void clientShouldDeleteWorkoutById(){
+        // this method tests the ability of client to delete any of his workouts by id
+        // if he has write access to the workout, then he can delete the workout itself.
+        // if he has read access to the workout, then he can delete the workout from his list of workouts (delete the link only).
+        WorkoutControllerTestUtil.shouldDeleteWorkoutById(clientToken, clientWorkout,  port, restTemplate);
+    }
+
+    @Test
+    public void ownerShouldNotDeleteWorkoutById(){
+        // this method tests that "owner can't delete workout that he has no access to it"
+
+        // owner has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotDeleteWorkoutById(ownerToken, coachWorkout, port, restTemplate);
+
+        // owner has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotDeleteWorkoutById(ownerToken, clientWorkout, port, restTemplate);
+    }
+
+    @Test
+    public void coachShouldNotDeleteWorkoutById(){
+        // this method tests that "coach can't delete workout that he has no access to it"
+
+        // coach has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotDeleteWorkoutById(coachToken, ownerWorkout, port, restTemplate);
+
+        // coach has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotDeleteWorkoutById(coachToken, clientWorkout, port, restTemplate);
+    }
+
+    @Test
+    public void clientShouldNotDeleteWorkoutById(){
+        // this method tests that "coach can't delete workout that he has no access to it"
+
+        // coach has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotDeleteWorkoutById(clientToken, ownerWorkout, port, restTemplate);
+
+        // coach has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotDeleteWorkoutById(clientToken, coachWorkout, port, restTemplate);
+    }
+
 
 
 
