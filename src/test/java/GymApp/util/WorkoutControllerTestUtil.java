@@ -163,5 +163,54 @@ public class WorkoutControllerTestUtil {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
+    static public ResponseEntity<WorkoutDto> attemptUpdateWorkoutById(String token, int port, WorkoutDto workoutDto, RestTemplate restTemplate){
+        // set up the request
+        // As port number as it's generated randomly.
+        String baseUrl = AuthUtil.getBaseUrl(port);
+
+        // set up the authentication header
+        HttpHeaders headers = new HttpHeaders();
+
+        // token value is assigned during setUp method
+        headers.add("Authorization", "Bearer " + token);
+        HttpEntity<WorkoutDto> request = new HttpEntity<>(workoutDto, headers);
+
+        // send the request
+        try{
+            return restTemplate.exchange(baseUrl + "/workouts/" + workoutDto.id(),
+                    HttpMethod.PUT, request, WorkoutDto.class);
+        }
+        catch (HttpClientErrorException e){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+    }
+
+    public static void shouldUpdateWorkoutById(String token, Workout workout, int port,RestTemplate restTemplate ){
+
+        WorkoutDto expectedWorkoutDto = WorkoutMapper.workoutEntityToWorkoutDto(workout);
+
+        attemptUpdateWorkoutById(token, port, expectedWorkoutDto, restTemplate);
+        ResponseEntity<WorkoutDto>  response = WorkoutControllerTestUtil.attemptUpdateWorkoutById(token, port,
+                expectedWorkoutDto, restTemplate);
+
+        WorkoutDto underTestWorkoutDto = response.getBody();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(underTestWorkoutDto).isEqualTo(expectedWorkoutDto);
+
+    }
+    public static void shouldNotUpdateWorkoutById(String token, Workout workout, int port,RestTemplate restTemplate ){
+
+        WorkoutDto expectedWorkoutDto = WorkoutMapper.workoutEntityToWorkoutDto(workout);
+
+        attemptUpdateWorkoutById(token, port, expectedWorkoutDto, restTemplate);
+        ResponseEntity<WorkoutDto>  response = WorkoutControllerTestUtil.attemptUpdateWorkoutById(token, port,
+                expectedWorkoutDto, restTemplate);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+
+
+    }
 
 }

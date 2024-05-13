@@ -340,7 +340,87 @@ class WorkoutControllerTest {
         // this method tests "that client can get all his workouts".
         WorkoutControllerTestUtil.shouldNotGetAllWorkouts(null, port, restTemplate);
     }
+    @Test
+    public void ownerShouldUpdateWorkoutById(){
+        // this method tests the ability of "Owner to update his own workouts by id"
+        // workouts that he has write access to it.
+        ownerWorkout.setName("name update");
+        Exercise.Builder exerciseBuilder = new Exercise.Builder();
+        ownerWorkout.setExercises(
+                List.of(
+                        exerciseBuilder.name("ex1 updated").sets(3).reps(10).build(),
+                        exerciseBuilder.name("ex2 updated").sets(3).reps(10).build()
+                )
+        );
+        WorkoutControllerTestUtil.shouldUpdateWorkoutById(ownerToken, ownerWorkout, port,restTemplate);
+    }
+    @Test
+    public void coachShouldUpdateWorkoutById(){
+        // this method tests the ability of "coach to update his own workouts by id"
+        // workouts that he has write access to it.
+        coachWorkout.setName("name update");
+        Exercise.Builder exerciseBuilder = new Exercise.Builder();
+        coachWorkout.setExercises(
+                List.of(
+                        exerciseBuilder.name("ex1 updated").sets(3).reps(10).build(),
+                        exerciseBuilder.name("ex2 updated").sets(3).reps(10).build()
+                )
+        );
+        WorkoutControllerTestUtil.shouldUpdateWorkoutById(coachToken, coachWorkout, port,restTemplate);
+    }
+    @Test
+    public void clientShouldUpdateWorkoutById(){
+        // this method tests the ability of "client to update his own workouts by id"
+        // workouts that he has write access to it.
+        clientWorkout.setName("name update");
+        Exercise.Builder exerciseBuilder = new Exercise.Builder();
+        clientWorkout.setExercises(
+                List.of(
+                        exerciseBuilder.name("ex1 updated").sets(3).reps(10).build(),
+                        exerciseBuilder.name("ex2 updated").sets(3).reps(10).build()
+                )
+        );
+        WorkoutControllerTestUtil.shouldUpdateWorkoutById(clientToken, clientWorkout, port, restTemplate);
+    }
+    @Test
+    public void ownerShouldNotUpdateWorkoutById(){
+        // this method tests that "An owner can't update workouts by id that he has no write access to it."
 
+        // owner has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotUpdateWorkoutById(ownerToken, coachWorkout, port, restTemplate);
+
+        // owner has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotUpdateWorkoutById(ownerToken, clientWorkout, port, restTemplate);
+
+        // owner has only read access to this workout.
+        WorkoutControllerTestUtil.shouldNotUpdateWorkoutById(ownerToken, commonWorkout, port, restTemplate);
+    }
+    @Test
+    public void coachShouldNotUpdateWorkoutById(){
+        // this method tests that "An client can't update workouts by id that he has no write access to it."
+
+        // coach has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotUpdateWorkoutById(coachToken, ownerWorkout, port, restTemplate);
+
+        // coach has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotUpdateWorkoutById(coachToken, clientWorkout, port, restTemplate);
+
+        // coach has only read access to this workout.
+        WorkoutControllerTestUtil.shouldNotUpdateWorkoutById(coachToken, commonWorkout, port, restTemplate);
+    }
+    @Test
+    public void clientShouldNotUpdateWorkoutById(){
+        // this method tests that "An client can't update workouts by id that he has no write access to it."
+
+        // client has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotUpdateWorkoutById(clientToken, ownerWorkout, port, restTemplate);
+
+        // client has no access to this workout.
+        WorkoutControllerTestUtil.shouldNotUpdateWorkoutById(clientToken, coachWorkout, port, restTemplate);
+
+        // client has only read access to this workout.
+        WorkoutControllerTestUtil.shouldNotUpdateWorkoutById(clientToken, commonWorkout, port, restTemplate);
+    }
 
 
 
