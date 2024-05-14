@@ -1,17 +1,10 @@
 package GymApp.controller;
 
-import GymApp.dto.AccountProfileDto;
-import GymApp.dto.CreateAccountDto;
-import GymApp.dto.ExerciseDto;
-import GymApp.dto.WorkoutDto;
 import GymApp.entity.*;
 import GymApp.enums.WorkoutAccessType;
 import GymApp.service.*;
-import GymApp.util.AuthUtil;
+import GymApp.util.GeneralUtil;
 import GymApp.util.WorkoutControllerTestUtil;
-import GymApp.util.entityAndDtoMappers.ExerciseMapper;
-import GymApp.util.entityAndDtoMappers.WorkoutMapper;
-import com.github.dockerjava.zerodep.shaded.org.apache.commons.codec.binary.Base64;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,19 +14,15 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -202,15 +191,15 @@ class WorkoutControllerTest {
 
 
         // get owner token.
-        ownerToken = AuthUtil.login(authenticatedOwner.getAccount().getEmail(), rawPassword,
-                AuthUtil.getBaseUrl(port)+"/login/owner", restTemplate);
+        ownerToken = GeneralUtil.login(authenticatedOwner.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port)+"/login/owner", restTemplate);
         // get coach token.
-        coachToken = AuthUtil.login(authenticatedCoach.getAccount().getEmail(), rawPassword,
-                AuthUtil.getBaseUrl(port)+"/login/coach", restTemplate);
+        coachToken = GeneralUtil.login(authenticatedCoach.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port)+"/login/coach", restTemplate);
 
         // get client token.
-        clientToken = AuthUtil.login(authenticatedClient.getAccount().getEmail(), rawPassword,
-                AuthUtil.getBaseUrl(port)+"/login/client", restTemplate);
+        clientToken = GeneralUtil.login(authenticatedClient.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port)+"/login/client", restTemplate);
 
     }
 
