@@ -48,6 +48,12 @@ public class Owner {
             this.account = accountBuilder.copyFrom(account).build();
             return this;
         }
+        public Builder copyFrom(Owner owner){
+            Account.Builder accountBuilder =  new Account.Builder();
+            this.account = accountBuilder.copyFrom(owner.getAccount()).build();
+            this.id = owner.id;
+            return this;
+        }
         public Owner build(){
             Owner owner =  new Owner();
             owner.id = this.id;

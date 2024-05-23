@@ -38,7 +38,7 @@ public class Util {
 
         // update the owner's account with the new data.
         dbAccount.setFirstName(accountProfileDto.firstName());
-        dbAccount.setSecondName(accountProfileDto.SecondName());
+        dbAccount.setSecondName(accountProfileDto.secondName());
         dbAccount.setThirdName(accountProfileDto.thirdName());
         dbAccount.setEmail(accountProfileDto.email());
         dbAccount.setPhoneNumber(accountProfileDto.phoneNumber());

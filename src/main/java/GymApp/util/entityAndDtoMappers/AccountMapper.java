@@ -28,7 +28,7 @@ public class AccountMapper {
     public static Account accountProfileDtoToAccountEntity(AccountProfileDto accountProfileDto) {
         Account.Builder accountBuilder = new Account.Builder();
         return accountBuilder.firstName(accountProfileDto.firstName())
-                .secondName(accountProfileDto.SecondName())
+                .secondName(accountProfileDto.secondName())
                 .thirdName(accountProfileDto.thirdName())
                 .email(accountProfileDto.email())
                 .phoneNumber(accountProfileDto.phoneNumber())

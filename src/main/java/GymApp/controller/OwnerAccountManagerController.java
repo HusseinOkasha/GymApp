@@ -65,6 +65,7 @@ public class OwnerAccountManagerController {
     // Get my profile details
     @GetMapping("/owner-account-manager")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
     AccountProfileDto getMyAccount(Authentication authentication) throws Exception {
        return util.getMyAccount(authentication);
     }
@@ -84,6 +85,7 @@ public class OwnerAccountManagerController {
 
     @PutMapping("/owner-account-manager")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
     AccountProfileDto updateMyProfile(@RequestBody @Valid AccountProfileDto accountProfileDto,
                                       Authentication authentication) throws Exception {
         return util.updateMyProfile(accountProfileDto, authentication);
@@ -92,6 +94,7 @@ public class OwnerAccountManagerController {
     // change password
     @PutMapping("/owner-account-manager/password")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_OWNER')")
     void changePassword(@RequestBody @Valid ChangePasswordDto changePasswordDto, Authentication authentication){
        util.changePassword(changePasswordDto, authentication);
     }
