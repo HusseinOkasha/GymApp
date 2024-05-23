@@ -165,7 +165,7 @@ class CoachAccountManagerControllerTest {
 
         assertThat(createdAccount).isNotNull();
         assertThat(createdAccount.firstName()).isEqualTo(firstName);
-        assertThat(createdAccount.SecondName()).isEqualTo(secondName);
+        assertThat(createdAccount.secondName()).isEqualTo(secondName);
         assertThat(createdAccount.thirdName()).isEqualTo(thirdName);
         assertThat(createdAccount.email()).isEqualTo(email);
         assertThat(createdAccount.phoneNumber()).isEqualTo(phoneNumber);
@@ -406,7 +406,7 @@ class CoachAccountManagerControllerTest {
         // check that all updates are reflected.
         assertThat(updatedAccountProfileDto).isNotNull();
         assertThat(updatedAccountProfileDto.firstName()).isEqualTo(updatedFirstName);
-        assertThat(updatedAccountProfileDto.SecondName()).isEqualTo(updatedSecondName);
+        assertThat(updatedAccountProfileDto.secondName()).isEqualTo(updatedSecondName);
         assertThat(updatedAccountProfileDto.thirdName()).isEqualTo(updatedThirdName);
         assertThat(updatedAccountProfileDto.email()).isEqualTo(updatedEmail);
         assertThat(updatedAccountProfileDto.phoneNumber()).isEqualTo(updatedPhoneNumber);

@@ -1,16 +1,20 @@
 package GymApp.controller;
 
+
 import GymApp.dto.AccountProfileDto;
-
-
-import GymApp.dto.ChangePasswordDto;
-import GymApp.dto.CreateAccountDto;
 import GymApp.entity.Account;
+import GymApp.entity.Client;
+import GymApp.entity.Coach;
 import GymApp.entity.Owner;
+import GymApp.service.ClientService;
+import GymApp.service.CoachService;
 import GymApp.service.OwnerService;
 
-import com.github.dockerjava.zerodep.shaded.org.apache.commons.codec.binary.Base64;
-import org.junit.jupiter.api.BeforeAll;
+import GymApp.util.GeneralUtil;
+import GymApp.util.OwnerAccountManagerControllerTestUtil;
+import GymApp.util.Request;
+import GymApp.util.entityAndDtoMappers.AccountMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,18 +24,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 
+
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
-
-
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.org.bouncycastle.cert.ocsp.Req;
 
 
-import java.util.ArrayList;
+import java.net.http.HttpResponse;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -39,589 +44,495 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @Testcontainers
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = { "spring.datasource.url=jdbc:tc:postgres:latest:///database", "spring.sql.init.mode=always" })
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"spring.datasource.url=jdbc:tc:postgres:latest:///database", "spring.sql.init.mode=always"})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class OwnerAccountManagerControllerTest {
 
     @Container
     @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:latest")
-            .withDatabaseName("database").withUsername("myuser");
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:latest").withDatabaseName("database").withUsername("myuser");
 
-    private static String token;
-    private static List<Account> accounts = new ArrayList<>();
     @Autowired
     RestTemplate restTemplate;
+
     @Autowired
-    OwnerService ownerService;
+    private OwnerService ownerService;
+    @Autowired
+    private CoachService coachService;
+    @Autowired
+    private ClientService clientService;
 
     @LocalServerPort
-    private int port;
+    private int port; // holds the random port number.
+
+    private static String ownerToken;  // holds token with owner scope.
+    private static String coachToken;  // holds token with coach scope.
+    private static String clientToken; // holds token with client scope.
+    private static final String rawPassword = "123"; // hold raw password "123".
+    // BCrypt password for raw password "123"
+    private static String bCryptPassword = "$2a$12$fdQCjXHktjZczz5hlHg77u8bIXUQdzGQf5k7ulN.cxzhW2vidHzSu";
 
 
-    @BeforeAll
-    static void generalSetUp(){
-        // "123" encoded with bCrypt
-        String bCryptPassword = "$2a$12$fdQCjXHktjZczz5hlHg77u8bIXUQdzGQf5k7ulN.cxzhW2vidHzSu";
+    private static final Owner.Builder ownerBuilder = new Owner.Builder();
+    private static final Coach.Builder coachBuilder = new Coach.Builder();
+    private static final Client.Builder clientBuilder = new Client.Builder();
+    private static final Account.Builder accountBuilder = new Account.Builder();
 
-        // Create 2 accounts
-        Account.Builder accountBuilder  = new Account.Builder();
-        Account acc1 = accountBuilder
-                .firstName("f1")
-                .secondName("s1")
-                .thirdName("t1")
-                .email("e1@gmail.com")
-                .phoneNumber("1")
-                .password(bCryptPassword)
-                .build();
-        Account acc2 = accountBuilder
-                .firstName("f2")
-                .secondName("s2")
-                .thirdName("t2")
-                .email("e2@gmail.com")
-                .phoneNumber("2")
-                .password(bCryptPassword)
-                .build();
+    // coach, client, owner2 all are declared final as they shouldn't change
+    private static final Coach coach = coachBuilder.account(
+            accountBuilder
+                    .firstName("f4")
+                    .secondName("s4")
+                    .thirdName("t4")
+                    .email("e4@gmail.com")
+                    .phoneNumber("4")
+                    .password(bCryptPassword)
+                    .build()
+    ).build();
 
-        // add newly created accounts to the accounts list.
-        accounts.add(acc1);
-        accounts.add(acc2);
+    private static final Client client = clientBuilder.account(
+            accountBuilder
+                    .firstName("f5")
+                    .secondName("s5")
+                    .thirdName("t5")
+                    .email("e5@gmail.com")
+                    .phoneNumber("5")
+                    .password(bCryptPassword)
+                    .build()
+    ).birthDate(LocalDate.of(2024, 5, 16)).build();
+
+    private static final Owner owner2 = ownerBuilder
+            .account(
+                    accountBuilder
+                            .firstName("f2")
+                            .secondName("s2")
+                            .thirdName("t2")
+                            .email("e2@gmail.com")
+                            .phoneNumber("2")
+                            .password(bCryptPassword)
+                            .build()
+            ).build();
+    private static final Owner owner3 = ownerBuilder
+            .account(
+                    accountBuilder
+                            .firstName("f3")
+                            .secondName("s3")
+                            .thirdName("t3")
+                            .email("e3@gmail.com")
+                            .phoneNumber("3")
+                            .password(bCryptPassword)
+                            .build()
+            ).build();
+    // owner1 isn't declared final as it will change for example in updateOwnerAccount
+    // that is why it will be initialized in the setUp method.
+    private static Owner owner1;
 
 
-    }
     @BeforeEach
     void setUp() {
-        // delete all owners to start fresh.
-        ownerService.deleteAll();
+        // initialize owner1
+        // the owner1 will be used to perform login.
+        owner1 = ownerBuilder.account(
+                accountBuilder
+                        .firstName("f1")
+                        .secondName("s1")
+                        .thirdName("t1")
+                        .email("e1@gmail.com")
+                        .phoneNumber("1")
+                        .password(bCryptPassword)
+                        .build()
+        ).build();
 
-
-        // Make them owner accounts.
-        Owner.Builder ownerBuilder = new Owner.Builder();
-
-        Owner owner1 = ownerBuilder.account(accounts.get(0)).build();
-        Owner owner2 = ownerBuilder.account(accounts.get(1)).build();
+        // initialize the database.
         ownerService.save(owner1);
         ownerService.save(owner2);
+        coachService.save(coach);
+        clientService.save(client);
 
-        token = login("1", "123",
-                getBaseUrl()+ "/login/owner");
+        // perform login and a token with scope owner.
+        ownerToken = GeneralUtil.login(owner1.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port) + "/login/owner", restTemplate);
+        coachToken = GeneralUtil.login(coach.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port) + "/login/coach", restTemplate);
+        clientToken = GeneralUtil.login(client.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port) + "/login/client", restTemplate);
+
+    }
+
+    @AfterEach
+    void tearDown() {
+        // delete all owners to start fresh.
+        ownerService.deleteAll();
+        coachService.deleteAll();
+        clientService.deleteAll();
     }
 
     @Test
-    void postgresContainerShouldBeRunning (){
+    void postgresContainerShouldBeRunning() {
         assertThat(postgres.isRunning()).isTrue();
     }
 
+    /*
+     * Create Owner Account tests.
+     * */
     @Test
     void shouldCreateOwnerAccount() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-
-        // new owner account values
-        String firstName = "f3";
-        String secondName = "s3";
-        String thirdName = "t3";
-        String email = "e3@gmail.com";
-        String phoneNumber = "3";
-        String password = "123";
-
-        // initalize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto(firstName, secondName, thirdName, email, phoneNumber,
-                password);
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-
-        AccountProfileDto createdAccount = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                HttpMethod.POST, request, AccountProfileDto.class).getBody();
-
-        assertThat(createdAccount).isNotNull();
-        assertThat(createdAccount.firstName()).isEqualTo(firstName);
-        assertThat(createdAccount.SecondName()).isEqualTo(secondName);
-        assertThat(createdAccount.thirdName()).isEqualTo(thirdName);
-        assertThat(createdAccount.email()).isEqualTo(email);
-        assertThat(createdAccount.phoneNumber()).isEqualTo(phoneNumber);
-
+        /*
+         * This method tests the ability of authenticated owner to create new owner account.
+         * It checks that the response status code is 200 (OK).
+         * In addition to checking that the returned account profile Dto has the same values
+         * as the provided createAccountDto when sending the request.
+         * I have chosen Owner3 as it's not saved to the database in the setup method.
+         * */
+        Owner toBeCreatedOwner = ownerBuilder.copyFrom(owner3).build();
+        // This method encapsulates the logic of the test.
+        OwnerAccountManagerControllerTestUtil
+                .shouldCreateOwnerAccount(toBeCreatedOwner, ownerToken, port, restTemplate);
     }
 
     @Test
-    void shouldNotCreateOwnerAccountWithoutFirstName(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void shouldNotCreateOwnerAccountWithMissingRequiredFields() {
+        /*
+         * This method tests that authenticated owner can't create owner account without any of the required fields.
+         * It checks that the response status code is 400 (Bad Request)
+         * Required fields are: firstName, secondName, thirdName, email, phoneNumber, password.
+         * I have chosen Owner3 as it's not saved to the database in the setup method.
+         * "OwnerAccountManagerControllerTestUtil.shouldNotCreateOwnerAccountWithMissingRequiredFields" encapsulates
+         * the logic of the test.
+         *
+         * */
 
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
+        // get sample owner.
+        Owner toBeCreatedOwner = ownerBuilder.copyFrom(owner3).build();
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
+        // should not create owner account with missing firstName.
+        toBeCreatedOwner.getAccount().setFirstName(null);
+        OwnerAccountManagerControllerTestUtil.shouldNotCreateOwnerAccountWithMissingRequiredFields(toBeCreatedOwner,
+                ownerToken, port, restTemplate);
 
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto(null, "s3", "t3", "e3",
-                "3", "123");
+        // should not create owner account with missing secondName.
+        toBeCreatedOwner = ownerBuilder.copyFrom(owner3).build();
+        toBeCreatedOwner.getAccount().setSecondName(null);
+        OwnerAccountManagerControllerTestUtil.shouldNotCreateOwnerAccountWithMissingRequiredFields(toBeCreatedOwner,
+                ownerToken, port, restTemplate);
 
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+        // should not create owner account with missing thirdName.
+        toBeCreatedOwner = ownerBuilder.copyFrom(owner3).build();
+        toBeCreatedOwner.getAccount().setThirdName(null);
+        OwnerAccountManagerControllerTestUtil.shouldNotCreateOwnerAccountWithMissingRequiredFields(toBeCreatedOwner,
+                ownerToken, port, restTemplate);
 
+        // should not create owner account with missing email.
+        toBeCreatedOwner = ownerBuilder.copyFrom(owner3).build();
+        toBeCreatedOwner.getAccount().setEmail(null);
+        OwnerAccountManagerControllerTestUtil.shouldNotCreateOwnerAccountWithMissingRequiredFields(toBeCreatedOwner,
+                ownerToken, port, restTemplate);
 
-    }
-    @Test
-    void shouldNotCreateOwnerAccountWithoutSecondName(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+        // should not create owner account with missing phone number.
+        toBeCreatedOwner = ownerBuilder.copyFrom(owner3).build();
+        toBeCreatedOwner.getAccount().setPhoneNumber(null);
+        OwnerAccountManagerControllerTestUtil.shouldNotCreateOwnerAccountWithMissingRequiredFields(toBeCreatedOwner,
+                ownerToken, port, restTemplate);
 
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", null, "t3", "e3",
-                "3", "123");
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
-    }
-    @Test
-    void shouldNotCreateOwnerAccountWithoutThirdName(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", null, "e3",
-                "3", "123");
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
-    }
-    @Test
-    void shouldNotCreateOwnerAccountWithoutEmail(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", "t3", null,
-                "3", "123");
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
-    }
-    @Test
-    void shouldNotCreateOwnerAccountWithoutPhoneNumber(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", "t3", "e3@gmail.com",
-                null, "123");
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
-    }
-
-
-    @Test
-    void shouldNotCreateOwnerAccountWithoutPassword(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s3", "t3", "e3",
-                "3", null);
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
+        // should not create owner account with missing password.
+        toBeCreatedOwner = ownerBuilder.copyFrom(owner3).build();
+        toBeCreatedOwner.getAccount().setPassword(null);
+        OwnerAccountManagerControllerTestUtil.shouldNotCreateOwnerAccountWithMissingRequiredFields(toBeCreatedOwner,
+                ownerToken, port, restTemplate);
     }
 
     @Test
-    void shouldGetOwner() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void unAuthenticatedOwnerShouldNotCreateOwnerAccount() {
+        /*
+         * This method tests that you can't create owner account without access token.
+         * It checks that the response status code is 401 (UNAUTHORIZED)
+         * */
 
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-        HttpEntity<String> request = new HttpEntity<String>(headers);
-        AccountProfileDto ownerAccount = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                HttpMethod.GET, request, AccountProfileDto.class).getBody();
-
-        assertThat(ownerAccount).isNotNull();
-        assertThat(ownerAccount.email()).isNotNull().isEqualTo("e1@gmail.com");
-    }
-
-
-    @Test
-    void shouldGetAllOwners() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl() ;
-
-        // Sending request associated with the token to get a list of all owners.
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + token);
-
-        HttpEntity<String> request = new HttpEntity<String>(headers);
-        ParameterizedTypeReference<List<AccountProfileDto>>
-                responseType = new ParameterizedTypeReference<List<AccountProfileDto>>() {};
-        List<AccountProfileDto> allOwnerAccounts = restTemplate.exchange(baseUrl + "/owner-account-manager/owners",
-                HttpMethod.GET, request, responseType).getBody();
-
-        // Check that there is 2 owner accounts returned
-        assertThat(allOwnerAccounts).isNotNull();
-        assertThat(allOwnerAccounts.size()).isEqualTo(2);
-
-        // check that the owners returned are the same ones which we inserted by the checking their emails.
-        List<String>possibleEmails = List.of(accounts.get(0).getEmail(), accounts.get(1).getEmail());
-        assertThat(allOwnerAccounts.get(0).email()).isIn(possibleEmails);
-        assertThat(allOwnerAccounts.get(1).email()).isIn(possibleEmails);
-    }
-
-
-
-    @Test
-    void shouldUpdateOwnerAccount() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // new values to update owner account.
-        String updatedFirstName = "updatedFirstName";
-        String updatedSecondName = "updatedSecondName";
-        String updatedThirdName = "updatedThirdName";
-        String updatedEmail = "updatedE1@gmail.com";
-        String updatedPhoneNumber = "updatedPhoneNumber";
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,updatedFirstName, updatedSecondName,
-                updatedThirdName,updatedEmail, updatedPhoneNumber, null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-
-
-        // check that all updates are reflected.
-        assertThat(updatedAccountProfileDto).isNotNull();
-        assertThat(updatedAccountProfileDto.firstName()).isEqualTo(updatedFirstName);
-        assertThat(updatedAccountProfileDto.SecondName()).isEqualTo(updatedSecondName);
-        assertThat(updatedAccountProfileDto.thirdName()).isEqualTo(updatedThirdName);
-        assertThat(updatedAccountProfileDto.email()).isEqualTo(updatedEmail);
-        assertThat(updatedAccountProfileDto.phoneNumber()).isEqualTo(updatedPhoneNumber);
-
+        /*
+         * Create sample owner.
+         * Why owner3 ?
+         * As it isn't saved to the database in the setup method.
+         * "OwnerAccountManagerControllerTestUtil.unAuthenticatedOwnerShouldNotCreateOwnerAccount" encapsulates the
+         * logic of the test.
+         * */
+        Owner toBeCreatedOwner = ownerBuilder.copyFrom(owner3).build();
+        OwnerAccountManagerControllerTestUtil
+                .unAuthenticatedOwnerShouldNotCreateOwnerAccount(toBeCreatedOwner, null, port, restTemplate);
     }
 
     @Test
-    void shouldNotUpdateOwnerAccountWithoutFirstName() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void clientAndCoachShouldNotCreateOwnerAccount() {
+        /*
+         * This method tests that coaches and clients are unable to create owner accounts
+         * It checks that the response status code is 403 (FORBIDDEN)
+         * Note: we know if a user is (owner / coach / client) from the scope of the access token.
+         * "OwnerAccountManagerControllerTestUtil.clientAndCoachShouldNotCreateOwnerAccount"
+         * encapsulates the logic of the test
+         * */
 
+        // create sample owner
+        Owner toBeCreatedOwner = ownerBuilder.copyFrom(owner3).build();
+        OwnerAccountManagerControllerTestUtil.clientAndCoachShouldNotCreateOwnerAccount(toBeCreatedOwner, coachToken,
+                port, restTemplate);
+        OwnerAccountManagerControllerTestUtil.clientAndCoachShouldNotCreateOwnerAccount(toBeCreatedOwner, clientToken,
+                port, restTemplate);
+    }
 
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,null, "updatedSecondName",
-                "updatedThirdName","updatedE1@gmail.com", "updatedPhoneNumber", null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+    /*
+     * Get Owner profile tests.
+     * */
+    @Test
+    void shouldGetOwnerProfile() {
+        /*
+         * This method tests that authenticated owner can get his profile details.
+         * It checks that the response status code is 200 (OK),
+         * in addition to checking that values of owner1 are the same as the returned in the response.
+         * here I have used owner1 as the ownerToken belongs to it.
+         * "OwnerAccountManagerControllerTestUtil.shouldGetOwnerProfile" encapsulates the logic of the test
+         * */
+        OwnerAccountManagerControllerTestUtil.shouldGetOwnerProfile(owner1, ownerToken, port, restTemplate);
     }
 
     @Test
-    void shouldNotUpdateOwnerAccountWithoutSecondName() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", null,
-                "updatedThirdName","updatedE1@gmail.com", "updatedPhoneNumber", null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-    }
-    @Test
-    void shouldNotUpdateOwnerAccountWithoutThirdName() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
-                null,"updatedE1@gmail.com", "updatedPhoneNumber", null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+    void shouldNotGetOwnerProfileWithoutAccessToken() {
+        /*
+         * this method tests that you can't get an owner profile without access token.
+         * It checks that the response status code is 401 (UNAUTHORIZED).
+         * */
+        OwnerAccountManagerControllerTestUtil.shouldNotGetOwnerProfile(null, port, restTemplate);
     }
 
     @Test
-    void shouldNotUpdateOwnerAccountWithoutEmail() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void coachAndClientShouldNotGetOwnerProfile() {
+        /*
+         * This method tests that you can't get an owner profile with a coach / client access token.
+         * It checks that the response status code is 403 (FORBIDDEN).
+         * Note: coach / client is known from the scope of the access token.
+         * "OwnerAccountManagerControllerTestUtil.coachAndClientShouldNotGetOwnerProfile" encapsulates the test logic.
+         * */
 
+        // this method tests that you can't get an owner profile with a coach access token.
+        OwnerAccountManagerControllerTestUtil.coachAndClientShouldNotGetOwnerProfile(coachToken, port, restTemplate);
 
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
-                "updatedThirdName",null, "updatedPhoneNumber", null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+        // this method tests that you can't get an owner profile with a client access token.
+        OwnerAccountManagerControllerTestUtil.coachAndClientShouldNotGetOwnerProfile(clientToken, port, restTemplate);
     }
+
+    /*
+     * Get All owners tests.
+     * */
     @Test
-    void shouldNotUpdateOwnerAccountWithoutPhoneNumber() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
-                "updatedThirdName","updatedE1@gmail.com", null, null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+    void ownerShouldGetAllOwners() {
+        /*
+         * This method check that an owner can list all owners in the system.
+         * It checks that the response status code is 200 (OK),
+         * in addition to checking that the returned list is same as the already saved owners in the database.
+         * "The already saved owners in the database" are owner1 and owner2.
+         * "OwnerAccountManagerControllerTestUtil.shouldGetAllOwners" encapsulates the logic of the test.
+         * */
+        // this method tests the ability of an authenticated owner to get all owners in the system
+        OwnerAccountManagerControllerTestUtil.shouldGetAllOwners(List.of(owner1, owner2), ownerToken, port, restTemplate);
     }
 
     @Test
-    void shouldChangeOwnerAccountPassword() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-
-        // new password
-        String newPassword = "1234";
-
-        ChangePasswordDto changePasswordDto = new ChangePasswordDto(newPassword);
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity request = new HttpEntity<>(changePasswordDto, headers);
-        HttpStatusCode httpStatusCode = restTemplate.exchange(baseUrl + "/owner-account-manager/password",
-                HttpMethod.PUT, request, void.class).getStatusCode();
-
-        assertThat(httpStatusCode).isNotNull();
-        assertThat(httpStatusCode).isEqualTo(HttpStatus.OK);
-
-        String token = login("1", newPassword, "http://localhost:" + port + "/api/login/owner");
-
-        assertThat(token).isNotNull();
-
+    void coachAndClientShouldNotGetAllOwners() {
+        /*
+         * This method tests that coach and client can't get all owner accounts
+         * It checks that the response status code is 403 (FORBIDDEN)
+         * user is known to be client or coach from the scope of the access token.
+         * */
+        OwnerAccountManagerControllerTestUtil.shouldNotGetAllOwners(coachToken, port, restTemplate);
+        OwnerAccountManagerControllerTestUtil.shouldNotGetAllOwners(clientToken, port, restTemplate);
     }
+
     @Test
-    void shouldNotUpdateOwnerAccountPasswordWithoutTheNewPassword() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // new password
-        String newPassword = null;
-
-        ChangePasswordDto changePasswordDto = new ChangePasswordDto(newPassword);
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity request = new HttpEntity<>(changePasswordDto, headers);
-
-        try{
-            HttpStatusCode httpStatusCode = restTemplate.exchange(baseUrl + "/owner-account-manager/password",
-                    HttpMethod.PUT, request, void.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-        
+    void shouldNotGetAllOwnersWithoutAccessToken() {
+        /*
+         * this method tests that getting all owners isn't achievable without access token.
+         * It checks that the response status code is 401 (UNAUTHORIZED)
+         * */
+        OwnerAccountManagerControllerTestUtil.shouldNotGetAllOwnersWithoutAccessToken(port, restTemplate);
     }
 
+    /*
+     * Update owner account tests.
+     * */
+    @Test
+    void shouldUpdateOwnerProfile() {
+
+        /*
+         * This method tests the ability of owner to update his profile.
+         * It checks that the updates made are reflected in the response body.
+         * We send the updated accountProfileDto in the request, then check if the updates are reflected in the
+         * accountProfileDto returned in the response.
+         * In addition, it checks that the response status code is 200 (OK).
+         * "OwnerAccountManagerControllerTestUtil.shouldUpdateOwnerAccount" it encapsulates the test logic.
+         * I have chosen owner1 as it's already saved on the database.
+         * the updates to values of owner1 are done on "OwnerAccountManagerControllerTestUtil.shouldUpdateOwnerAccount"
+         * */
+        OwnerAccountManagerControllerTestUtil.shouldUpdateOwnerAccount(ownerToken, owner1, port, restTemplate);
+    }
+
+    @Test
+    void coachAndClientShouldNotUpdateOwnerProfile() {
+        /*
+         * This method tests that coach / client  can't update owner account.
+         * It checks that the response status code is 403 (FORBIDDEN).
+         * user is known to be client or coach from the scope of the access token.
+         * */
+
+        // tests that coach can't update owner account.
+        OwnerAccountManagerControllerTestUtil
+                .coachAndClientShouldNotUpdateOwnerAccount(coachToken, owner1, port, restTemplate);
+
+        // tests that client can't update owner account.
+        OwnerAccountManagerControllerTestUtil
+                .coachAndClientShouldNotUpdateOwnerAccount(clientToken, owner1, port, restTemplate);
+    }
+
+    @Test
+    void shouldNotUpdateOwnerProfileWithoutAccessToken() {
+        /*
+         * This method tests that changing owner profile without access token isn't achievable.
+         * It checks that the response status code is 401 (UNAUTHORIZED)
+         * */
+        //
+        OwnerAccountManagerControllerTestUtil
+                .shouldNotUpdateOwnerAccountProfileWithoutAccessToken(owner1, port, restTemplate);
+    }
+
+    @Test
+    void shouldNotUpdateOwnerProfileWithMissingRequiredFields() {
+        /*
+         * This method tests that you can't update owner profile without any of the required fields.
+         * It checks that the response status code is 400 (BAD_REQUEST).
+         * You may wonder what if I want to update certain field only not all of them, then provide them without update.
+         * "OwnerAccountManagerControllerTestUtil.shouldNotUpdateOwnerAccountProfileWithMissingRequiredFields"
+         * Encapsulates the test logic.
+         * */
+        Owner owner = ownerBuilder.copyFrom(owner1).build(); // sample owner
+
+        // try update without firstName.
+        owner.getAccount().setFirstName(null);
+        OwnerAccountManagerControllerTestUtil
+                .shouldNotUpdateOwnerAccountProfileWithMissingRequiredFields
+                        (owner, ownerToken, port, restTemplate);
+
+        // try update without secondName.
+        owner = ownerBuilder.copyFrom(owner1).build();
+        owner.getAccount().setSecondName(null);
+        OwnerAccountManagerControllerTestUtil
+                .shouldNotUpdateOwnerAccountProfileWithMissingRequiredFields
+                        (owner, ownerToken, port, restTemplate);
+
+        // try update without thirdName.
+        owner = ownerBuilder.copyFrom(owner1).build();
+        owner.getAccount().setThirdName(null);
+        OwnerAccountManagerControllerTestUtil
+                .shouldNotUpdateOwnerAccountProfileWithMissingRequiredFields
+                        (owner, ownerToken, port, restTemplate);
+
+        // try update without email.
+        owner = ownerBuilder.copyFrom(owner1).build();
+        owner.getAccount().setEmail(null);
+        OwnerAccountManagerControllerTestUtil
+                .shouldNotUpdateOwnerAccountProfileWithMissingRequiredFields
+                        (owner, ownerToken, port, restTemplate);
+
+        // try update without phoneNumber.
+        owner = ownerBuilder.copyFrom(owner1).build();
+        owner.getAccount().setPhoneNumber(null);
+        OwnerAccountManagerControllerTestUtil
+                .shouldNotUpdateOwnerAccountProfileWithMissingRequiredFields
+                        (owner, ownerToken, port, restTemplate);
+    }
+
+    /*
+     * Change owner account password tests.
+     * */
+    @Test
+    void shouldChangeOwnerPassword() {
+        /*
+         * this method tests that authenticated owner can change his password.
+         * It checks that the response status code is 200 (OK)
+         * "OwnerAccountManagerControllerTestUtil.shouldChangeOwnerPassword" encapsulates the test logic.
+         * */
+        OwnerAccountManagerControllerTestUtil
+                .shouldChangeOwnerPassword(ownerToken, "1234", port, restTemplate);
+    }
+
+    @Test
+    void coachAndClientShouldNotChangeOwnerPassword() {
+        /*
+         * tests that both coach and client can't change password for owner account.
+         * It checks that the response status code is 403 (FORBIDDEN)
+         * "OwnerAccountManagerControllerTestUtil.coachAndClientShouldNotChangeOwnerPassword" encapsulates the test logic.
+         * */
+        OwnerAccountManagerControllerTestUtil
+                .coachAndClientShouldNotChangeOwnerPassword(coachToken, "1234", port, restTemplate);
+
+        OwnerAccountManagerControllerTestUtil
+                .coachAndClientShouldNotChangeOwnerPassword(clientToken, "1234", port, restTemplate);
+    }
+
+    @Test
+    void shouldNotUpdatePasswordWithEmptyPassword() {
+        /*
+         * This method tests that you can't change the password with empty password.
+         * It checks that the response status code is 400 bad request.
+         * "OwnerAccountManagerControllerTestUtil.shouldNotChangePasswordWithEmptyPassword" encapsulates the test logic.
+         * */
+        OwnerAccountManagerControllerTestUtil
+                .shouldNotChangePasswordWithEmptyPassword(ownerToken, "", port, restTemplate);
+    }
+
+    @Test
+    void shouldNotChangeOwnerPasswordWithoutAccessToken() {
+        /*
+         * This method tests that changing owner Account password is not achievable without access token.
+         * It checks that the response status code is 401 (UNAUTHORIZED)
+         * "OwnerAccountManagerControllerTestUtil.shouldNotChangeOwnerPasswordWithoutAccessToken" encapsulates
+         * the test logic
+         * */
+        OwnerAccountManagerControllerTestUtil
+                .shouldNotChangeOwnerPasswordWithoutAccessToken("1234", port, restTemplate);
+    }
+
+    /*
+     * Delete owner account tests.
+     * */
     @Test
     void shouldDeleteOwnerAccount() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-
-                HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity request = new HttpEntity<>(headers);
-        HttpStatusCode responseStatusCode = restTemplate.exchange(baseUrl + "/owner-account-manager",
-                HttpMethod.DELETE, request, void.class).getStatusCode();
-
-        assertThat(responseStatusCode).isNotNull().isEqualTo(HttpStatus.OK);
+        /*
+         * This method tests that owner can delete his own account.
+         * it checks that the response status code is 200 (OK).
+         * "OwnerAccountManagerControllerTestUtil.shouldDeleteOwnerAccount" encapsulates the test logic.
+         * */
+        OwnerAccountManagerControllerTestUtil
+                .shouldDeleteOwnerAccount(ownerToken, port, restTemplate);
     }
 
+    @Test
+    void coachAndClientShouldNotDeleteOwnerAccount() {
+        /*
+         * This method tests that coach and client can't delete owner account.
+         * it checks that the response status code is 403 (FORBIDDEN)
+         * OwnerAccountManagerControllerTestUtil.coachAndClientShouldNotDeleteOwnerAccount encapsulates the test logic.
+         * user is known to be (owner / coach / client ) from the token scope.
+         * */
+        OwnerAccountManagerControllerTestUtil.coachAndClientShouldNotDeleteOwnerAccount(coachToken, port, restTemplate);
 
-    // utility method to encapsulate the login logic.
-    String login(String username, String password, String url){
-
-        // Create the basic auth request to the api/login/owner endpoint.
-        String plainCredentials  = username + ":" + password;
-        byte[] plainCredentialsBytes = plainCredentials.getBytes();
-
-        // Encode the basic authentication request.
-        byte[] base64CredentialsBytes = Base64.encodeBase64(plainCredentialsBytes);
-        String base64Credentials= new String(base64CredentialsBytes);
-
-        // Create the header object
-        HttpHeaders basicAuthHeaders = new HttpHeaders();
-        basicAuthHeaders.add("Authorization", "Basic " + base64Credentials);
-
-        // Perform login to get the token.
-        HttpEntity<String> basicAuthRequest = new HttpEntity<String>(basicAuthHeaders);
-        String  token = restTemplate.postForObject(url, basicAuthRequest
-                ,String.class);
-
-        return token;
+        OwnerAccountManagerControllerTestUtil.coachAndClientShouldNotDeleteOwnerAccount(clientToken, port, restTemplate);
     }
 
-    // utility method to get the base url
-     String getBaseUrl(){
-        String baseUrl = "http://localhost:" + port + "/api";
-        return baseUrl;
-
+    @Test
+    void shouldNotDeleteOwnerAccountWithoutAccessToken() {
+        /*
+         * This method tests that deleting owner account isn't achievable without access token.
+         * It checks response status code is 401 (UNAUTHORIZED)
+         * "OwnerAccountManagerControllerTestUtil.shouldNotDeleteOwnerAccountWithoutAccessToken"
+         * encapsulates the test logic
+         * */
+        OwnerAccountManagerControllerTestUtil.shouldNotDeleteOwnerAccountWithoutAccessToken(port, restTemplate);
     }
-
 }

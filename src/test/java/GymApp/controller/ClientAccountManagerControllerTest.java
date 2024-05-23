@@ -182,7 +182,7 @@ class ClientAccountManagerControllerTest {
 
         assertThat(accountProfileDto).isNotNull();
         assertThat(accountProfileDto.firstName()).isEqualTo(firstName);
-        assertThat(accountProfileDto.SecondName()).isEqualTo(secondName);
+        assertThat(accountProfileDto.secondName()).isEqualTo(secondName);
         assertThat(accountProfileDto.thirdName()).isEqualTo(thirdName);
         assertThat(accountProfileDto.email()).isEqualTo(email);
         assertThat(accountProfileDto.phoneNumber()).isEqualTo(phoneNumber);
@@ -430,7 +430,7 @@ class ClientAccountManagerControllerTest {
         // check that all updates are reflected.
         assertThat(updatedAccountProfileDto).isNotNull();
         assertThat(updatedAccountProfileDto.firstName()).isEqualTo(updatedFirstName);
-        assertThat(updatedAccountProfileDto.SecondName()).isEqualTo(updatedSecondName);
+        assertThat(updatedAccountProfileDto.secondName()).isEqualTo(updatedSecondName);
         assertThat(updatedAccountProfileDto.thirdName()).isEqualTo(updatedThirdName);
         assertThat(updatedAccountProfileDto.email()).isEqualTo(updatedEmail);
         assertThat(updatedAccountProfileDto.phoneNumber()).isEqualTo(updatedPhoneNumber);

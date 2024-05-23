@@ -8,10 +8,9 @@ import GymApp.entity.Account;
 
 import GymApp.entity.Coach;
 
-import GymApp.exception.AccountCreationFailureException;
 import GymApp.security.EncryptionService;
 import GymApp.service.*;
-import GymApp.util.EntityAndDtoConverters;
+import GymApp.util.entityAndDtoMappers.AccountMapper;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,8 +47,8 @@ public class CoachAccountManagerController {
             throws Exception {
 
         // create entity account from the account dto
-        Account newAccount = EntityAndDtoConverters
-                .convertCreateAccountDtoToAccountEntity(createAccountDto);
+        Account newAccount = AccountMapper
+                .createAccountDtoToAccountEntity(createAccountDto);
 
         // encrypt the password
         String password = newAccount.getPassword();
@@ -62,7 +61,7 @@ public class CoachAccountManagerController {
         coachService.save(coach);
 
         // return the account profile dto (without password).
-        return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);
+        return AccountMapper.accountEntityToAccountProfileDto(newAccount);
     }
 
     // Get my profile details
@@ -82,7 +81,7 @@ public class CoachAccountManagerController {
 
         // get their accounts and convert it to account profile dto
         return result.stream().map(Coach::getAccount)
-                .map(EntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
+                .map(AccountMapper::accountEntityToAccountProfileDto).toList();
 
     }
 
@@ -118,6 +117,4 @@ public class CoachAccountManagerController {
             throw new BadRequestException("Empty email and phoneNumber");
         }
     }
-
-
 }
