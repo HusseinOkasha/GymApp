@@ -8,10 +8,9 @@ import GymApp.entity.Account;
 
 import GymApp.entity.Coach;
 
-import GymApp.exception.AccountCreationFailureException;
 import GymApp.security.EncryptionService;
 import GymApp.service.*;
-import GymApp.util.EntityAndDtoConverters;
+import GymApp.util.entityAndDtoMappers.AccountMapper;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,8 +47,8 @@ public class CoachAccountManagerController {
             throws Exception {
 
         // create entity account from the account dto
-        Account newAccount = EntityAndDtoConverters
-                .convertCreateAccountDtoToAccountEntity(createAccountDto);
+        Account newAccount = AccountMapper
+                .createAccountDtoToAccountEntity(createAccountDto);
 
         // encrypt the password
         String password = newAccount.getPassword();
@@ -62,12 +61,13 @@ public class CoachAccountManagerController {
         coachService.save(coach);
 
         // return the account profile dto (without password).
-        return EntityAndDtoConverters.convertAccountEntityToAccountProfileDto(newAccount);
+        return AccountMapper.accountEntityToAccountProfileDto(newAccount);
     }
 
     // Get my profile details
     @GetMapping("/coach-account-manager")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_COACH')")
     AccountProfileDto getMyAccount(Authentication authentication) throws Exception {
         return util.getMyAccount(authentication);
     }
@@ -82,12 +82,13 @@ public class CoachAccountManagerController {
 
         // get their accounts and convert it to account profile dto
         return result.stream().map(Coach::getAccount)
-                .map(EntityAndDtoConverters::convertAccountEntityToAccountProfileDto).toList();
+                .map(AccountMapper::accountEntityToAccountProfileDto).toList();
 
     }
 
     @PutMapping("/coach-account-manager")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_COACH')")
     AccountProfileDto updateMyProfile(@RequestBody @Valid AccountProfileDto accountProfileDto,
                                       Authentication authentication) throws Exception {
         return util.updateMyProfile(accountProfileDto, authentication);
@@ -96,6 +97,7 @@ public class CoachAccountManagerController {
     // change password
     @PutMapping("/coach-account-manager/password")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_COACH')")
     void changePassword(@RequestBody @Valid ChangePasswordDto changePasswordDto, Authentication authentication){
         util.changePassword(changePasswordDto, authentication);
     }
@@ -118,6 +120,4 @@ public class CoachAccountManagerController {
             throw new BadRequestException("Empty email and phoneNumber");
         }
     }
-
-
 }
