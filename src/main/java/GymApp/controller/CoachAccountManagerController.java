@@ -67,6 +67,7 @@ public class CoachAccountManagerController {
     // Get my profile details
     @GetMapping("/coach-account-manager")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_COACH')")
     AccountProfileDto getMyAccount(Authentication authentication) throws Exception {
         return util.getMyAccount(authentication);
     }
@@ -87,6 +88,7 @@ public class CoachAccountManagerController {
 
     @PutMapping("/coach-account-manager")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_COACH')")
     AccountProfileDto updateMyProfile(@RequestBody @Valid AccountProfileDto accountProfileDto,
                                       Authentication authentication) throws Exception {
         return util.updateMyProfile(accountProfileDto, authentication);
@@ -95,6 +97,7 @@ public class CoachAccountManagerController {
     // change password
     @PutMapping("/coach-account-manager/password")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_COACH')")
     void changePassword(@RequestBody @Valid ChangePasswordDto changePasswordDto, Authentication authentication){
         util.changePassword(changePasswordDto, authentication);
     }

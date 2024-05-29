@@ -5,12 +5,19 @@ import GymApp.dto.ChangePasswordDto;
 import GymApp.dto.CreateAccountDto;
 import GymApp.dto.DeleteAccountDto;
 import GymApp.entity.Account;
+import GymApp.entity.Client;
 import GymApp.entity.Coach;
 import GymApp.entity.Owner;
+import GymApp.service.ClientService;
 import GymApp.service.CoachService;
 
 import GymApp.service.OwnerService;
+import GymApp.util.CoachAccountManagerControllerTestUtil;
+import GymApp.util.GeneralUtil;
+import GymApp.util.entityAndDtoMappers.AccountMapper;
 import com.github.dockerjava.zerodep.shaded.org.apache.commons.codec.binary.Base64;
+import org.assertj.core.api.AssertionsForClassTypes;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,624 +34,580 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = { "spring.datasource.url=jdbc:tc:postgres:latest:///database", "spring.sql.init.mode=always" })
+        properties = {"spring.datasource.url=jdbc:tc:postgres:latest:///database", "spring.sql.init.mode=always"})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class CoachAccountManagerControllerTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:latest")
             .withDatabaseName("database").withUsername("myuser");
-
-    private static String ownerToken;
-    private static String coachToken;
-    private static List<Account> ownerAccounts = new ArrayList<>();
-    private static List<Account> coachAccounts = new ArrayList<>();
     @Autowired
     RestTemplate restTemplate;
-    @Autowired
-    CoachService coachService;
 
     @Autowired
-    OwnerService ownerService;
+    private OwnerService ownerService;
+    @Autowired
+    private CoachService coachService;
+    @Autowired
+    private ClientService clientService;
 
     @LocalServerPort
-    private int port;
+    private int port; // holds the random port number.
 
-    @BeforeAll
-    static void generalSetUp(){
-        // "123" encoded with bCrypt
-        String bCryptPassword = "$2a$12$fdQCjXHktjZczz5hlHg77u8bIXUQdzGQf5k7ulN.cxzhW2vidHzSu";
+    private static String ownerToken;  // holds token with owner scope.
+    private static String coachToken;  // holds token with coach scope.
+    private static String clientToken; // holds token with client scope.
+    private static final String rawPassword = "123"; // hold raw password "123".
+    // BCrypt password for raw password "123"
+    private static final String bCryptPassword = "$2a$12$fdQCjXHktjZczz5hlHg77u8bIXUQdzGQf5k7ulN.cxzhW2vidHzSu";
 
-        // Create 2 accounts
-        Account.Builder accountBuilder  = new Account.Builder();
-        Account acc1 = accountBuilder
-                .firstName("f1")
-                .secondName("s1")
-                .thirdName("t1")
-                .email("e1@gmail.com")
-                .phoneNumber("1")
-                .password(bCryptPassword)
-                .build();
-        Account acc2 = accountBuilder
-                .firstName("f2")
-                .secondName("s2")
-                .thirdName("t2")
-                .email("e2@gmail.com")
-                .phoneNumber("2")
-                .password(bCryptPassword)
-                .build();
 
-        // this account will be used as an owner account.
-        Account acc3 = accountBuilder
-                .firstName("f3")
-                .secondName("s3")
-                .thirdName("t3")
-                .email("e3@gmail.com")
-                .phoneNumber("3")
-                .password(bCryptPassword)
-                .build();
+    private static final Owner.Builder ownerBuilder = new Owner.Builder();
+    private static final Coach.Builder coachBuilder = new Coach.Builder();
+    private static final Client.Builder clientBuilder = new Client.Builder();
+    private static final Account.Builder accountBuilder = new Account.Builder();
 
-        // add newly created accounts to the coach accounts list.
-        coachAccounts.add(acc1);
-        coachAccounts.add(acc2);
+    private static Coach coach1 = coachBuilder.account(
+            accountBuilder
+                    .firstName("f1")
+                    .secondName("s1")
+                    .thirdName("t1")
+                    .email("e1@gmail.com")
+                    .phoneNumber("1")
+                    .password(bCryptPassword)
+                    .build()
+    ).build();
+    private static final Coach coach2 = coachBuilder.account(
+            accountBuilder
+                    .firstName("f2")
+                    .secondName("s2")
+                    .thirdName("t2")
+                    .email("e2@gmail.com")
+                    .phoneNumber("2")
+                    .password(bCryptPassword)
+                    .build()
+    ).build();
+    private static final Coach coach3 = coachBuilder.account(
+            accountBuilder
+                    .firstName("f3")
+                    .secondName("s3")
+                    .thirdName("t3")
+                    .email("e3@gmail.com")
+                    .phoneNumber("3")
+                    .password(bCryptPassword)
+                    .build()
+    ).build();
 
-        // add the owner account the owner account list
-        ownerAccounts.add(acc3);
+    private static final Owner owner = ownerBuilder.account(
+            accountBuilder
+                    .firstName("f4")
+                    .secondName("s4")
+                    .thirdName("t4")
+                    .email("e4@gmail.com")
+                    .phoneNumber("4")
+                    .password(bCryptPassword)
+                    .build()
+    ).build();
+    private static final Client client = clientBuilder.account(
+            accountBuilder
+                    .firstName("f5")
+                    .secondName("s5")
+                    .thirdName("t5")
+                    .email("e5@gmail.com")
+                    .phoneNumber("5")
+                    .password(bCryptPassword)
+                    .build()
+    ).birthDate(LocalDate.of(2024, 5, 16)).build();
 
-    }
+    private CoachAccountManagerControllerTestUtil testUtil;
+
 
     @BeforeEach
     void setUp() {
-        // delete all coaches & owners to start fresh.
-        coachService.deleteAll();
-        ownerService.deleteAll();
-
-        // Make them coach accounts.
-        Account.Builder accountBuilder = new Account.Builder();
-        Coach.Builder coachBuilder = new Coach.Builder();
-        Coach coach1 = coachBuilder
-                .account(
-                        accountBuilder.copyFrom(coachAccounts.get(0)).build()
-                ).build();
-                //new Coach(new Account(coachAccounts.get(0)));
-        Coach coach2 = coachBuilder
-                .account(
-                        accountBuilder.copyFrom(coachAccounts.get(1)).build()
-                ).build();
+        // initialize the database.
+        ownerService.save(owner);
         coachService.save(coach1);
         coachService.save(coach2);
+        clientService.save(client);
 
-        // create owner account.
-        Owner.Builder ownerBuilder = new Owner.Builder();
-        ownerService.save(ownerBuilder.account(ownerAccounts.get(0)).build());
+        // perform login to get token with scopes (owner, coach, and client) respectively.
+        ownerToken = GeneralUtil.login(owner.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port) + "/login/owner", restTemplate);
+        coachToken = GeneralUtil.login(coach1.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port) + "/login/coach", restTemplate);
+        clientToken = GeneralUtil.login(client.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port) + "/login/client", restTemplate);
 
-        // get token as a result of coach login
-        coachToken = login("1", "123",
-                getBaseUrl()+ "/login/coach");
+        // set up the util class
+        testUtil = new CoachAccountManagerControllerTestUtil(port, restTemplate);
+    }
 
-        // get token as a result of owner login.
-        ownerToken = login("3", "123",
-                getBaseUrl()+ "/login/owner");
+    @AfterEach
+    void tearDown() {
+        // clear the database to start fresh.
+        ownerService.deleteAll();
+        coachService.deleteAll();
+        clientService.deleteAll();
+    }
+
+    /*
+     * Create new coach account tests
+     * */
+    @Test
+    void ownerShouldCreateNewCoachAccount() {
+        /*
+         * This method tests that owner can create coach accounts.
+         * It checks that the response status code is 200 (OK).
+         * In addition to checking that the returned account profile Dto has the same values
+         * as the provided createAccountDto when sending the request
+         * I have chosen coach3 as it's not saved to the database in the setup method.
+         * "ownerShouldCreateCoachAccount" is a util method used to encapsulate the test logic.
+         * */
+
+        // the expected account profile dto (the one that should be returned in the response).
+        AccountProfileDto expected = AccountMapper.accountEntityToAccountProfileDto(coach3.getAccount());
+
+        ResponseEntity<AccountProfileDto> response = testUtil.attemptCreateCoachAccount(coach3, ownerToken);
+
+        AccountProfileDto actual = response.getBody();
+
+        AssertionsForClassTypes.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        AssertionsForClassTypes.assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    void shouldCreateNewCoachAccount() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void coachAndClientShouldNotCreateNewCoachAccount() {
+        /*
+         * This method tests that coaches and clients both can't create coach accounts.
+         * It checks that Coaches & clients can't create coach accounts.
+         * In Addition to checking that the response status code is 403 (FORBIDDEN)
+         * User is known to be (owner / coach / client) from the scope of the access token.
+         * Here I have chosen coach3 as it's not saved to the database in the setup method.
+         * */
 
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
+        // tests that coach can't create coach account.
+        testUtil.coachAndClientShouldNotCreateCoachAccount(coach3, coachToken);
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
-
-        // new owner account values
-        String firstName = "f4";
-        String secondName = "s4";
-        String thirdName = "t4";
-        String email = "e4@gmail.com";
-        String phoneNumber = "4";
-        String password = "123";
-
-        // initalize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto(firstName, secondName, thirdName, email, phoneNumber,
-                password);
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-
-        AccountProfileDto createdAccount = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                HttpMethod.POST, request, AccountProfileDto.class).getBody();
-
-        assertThat(createdAccount).isNotNull();
-        assertThat(createdAccount.firstName()).isEqualTo(firstName);
-        assertThat(createdAccount.secondName()).isEqualTo(secondName);
-        assertThat(createdAccount.thirdName()).isEqualTo(thirdName);
-        assertThat(createdAccount.email()).isEqualTo(email);
-        assertThat(createdAccount.phoneNumber()).isEqualTo(phoneNumber);
-
-    }
-    @Test
-    void shouldNotCreateCoachAccountWithoutFirstName(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto(null, "s3", "t3", "e3",
-                "3", "123");
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
-    }
-    @Test
-    void shouldNotCreateCoachAccountWithoutSecondName(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", null, "t3", "e3",
-                "3", "123");
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
-    }
-    @Test
-    void shouldNotCreateCoachAccountWithoutThirdName(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", null, "e3",
-                "3", "123");
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
-    }
-    @Test
-    void shouldNotCreateCoachAccountWithoutEmail(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", "t3", null,
-                "3", "123");
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
-    }
-    @Test
-    void shouldNotCreateCoachAccountWithoutPhoneNumber(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", "t3", "e3@gmail.com",
-                null, "123");
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
-    }
-
-
-    @Test
-    void shouldNotCreateCoachAccountWithoutPassword(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s3", "t3", "e3",
-                "3", null);
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
-    }
-
-
-    @Test
-    void shouldGetMyAccount() {
-
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + coachToken);
-        HttpEntity<String> request = new HttpEntity<String>(headers);
-        AccountProfileDto coachAccount = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                HttpMethod.GET, request, AccountProfileDto.class).getBody();
-
-        assertThat(coachAccount).isNotNull();
-        assertThat(coachAccount.email()).isNotNull().isEqualTo("e1@gmail.com");
-    }
-
-    @Test
-    void shouldGetAllCoachAccounts() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl() ;
-
-        // Sending request associated with the token to get a list of all coaches.
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + ownerToken);
-
-        HttpEntity<String> request = new HttpEntity<String>(headers);
-        ParameterizedTypeReference<List<AccountProfileDto>>
-                responseType = new ParameterizedTypeReference<List<AccountProfileDto>>() {};
-        List<AccountProfileDto> allCoachAccounts = restTemplate.exchange(baseUrl + "/coach-account-manager/coaches",
-                HttpMethod.GET, request, responseType).getBody();
-
-        // Check that there is 2 owner accounts returned
-        assertThat(allCoachAccounts).isNotNull();
-        assertThat(allCoachAccounts.size()).isEqualTo(2);
-
-        // check that the owners returned are the same ones which we inserted by the checking their emails.
-        List<String>possibleEmails = List.of(coachAccounts.get(0).getEmail(), coachAccounts.get(1).getEmail());
-        assertThat(allCoachAccounts.get(0).email()).isIn(possibleEmails);
-        assertThat(allCoachAccounts.get(1).email()).isIn(possibleEmails);
+        // tests that client can't create coach account.
+        testUtil.coachAndClientShouldNotCreateCoachAccount(coach3, clientToken);
 
     }
 
     @Test
-    void shouldUpdateMyProfile() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void shouldNotCreateCoachAccountWithMissingRequiredFields() {
+        /*
+         * Given that you have an access token with scope owner, you can't create new
+         * coach account while missing any of the required fields.
+         * Required fields are: firstName, secondName, thirdName, email, phoneNumber, and  password.
+         * It checks that the response status code it 400 (BAD_REQUEST).
+         * coach3: is the coach to be created, I have chosen it as it isn't saved on the database in setup method.
+         * token: is an access token with scope owner. (result of owner login in the setup method).
+         * */
 
-        // new values to update coach account.
-        String updatedFirstName = "updatedFirstName";
-        String updatedSecondName = "updatedSecondName";
-        String updatedThirdName = "updatedThirdName";
-        String updatedEmail = "updatedE1@gmail.com";
-        String updatedPhoneNumber = "updatedPhoneNumber";
+        // test with missing firstname.
+        Coach coachToBeCreated = coachBuilder.copyFrom(coach3).build();
+        coachToBeCreated.getAccount().setFirstName(null);
+        testUtil.shouldNotCreateNewCoachAccountWithMissingRequiredFields(coachToBeCreated, ownerToken);
 
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,updatedFirstName, updatedSecondName,
-                updatedThirdName,updatedEmail, updatedPhoneNumber, null, null);
+        // test with missing secondName.
+        coachToBeCreated = coachBuilder.copyFrom(coach3).build();
+        coachToBeCreated.getAccount().setSecondName(null);
+        testUtil.shouldNotCreateNewCoachAccountWithMissingRequiredFields(coachToBeCreated, ownerToken);
 
+        // test with missing thirdName.
+        coachToBeCreated = coachBuilder.copyFrom(coach3).build();
+        coachToBeCreated.getAccount().setThirdName(null);
+        testUtil.shouldNotCreateNewCoachAccountWithMissingRequiredFields(coachToBeCreated, ownerToken);
 
-        HttpHeaders headers = new HttpHeaders();
+        // test with missing email.
+        coachToBeCreated = coachBuilder.copyFrom(coach3).build();
+        coachToBeCreated.getAccount().setEmail(null);
+        testUtil.shouldNotCreateNewCoachAccountWithMissingRequiredFields(coachToBeCreated, ownerToken);
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + coachToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        // test with missing phoneNumber.
+        coachToBeCreated = coachBuilder.copyFrom(coach3).build();
+        coachToBeCreated.getAccount().setPhoneNumber(null);
+        testUtil.shouldNotCreateNewCoachAccountWithMissingRequiredFields(coachToBeCreated, ownerToken);
 
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-
-
-        // check that all updates are reflected.
-        assertThat(updatedAccountProfileDto).isNotNull();
-        assertThat(updatedAccountProfileDto.firstName()).isEqualTo(updatedFirstName);
-        assertThat(updatedAccountProfileDto.secondName()).isEqualTo(updatedSecondName);
-        assertThat(updatedAccountProfileDto.thirdName()).isEqualTo(updatedThirdName);
-        assertThat(updatedAccountProfileDto.email()).isEqualTo(updatedEmail);
-        assertThat(updatedAccountProfileDto.phoneNumber()).isEqualTo(updatedPhoneNumber);
-
-    }
-    @Test
-    void shouldNotUpdateCoachAccountWithoutFirstName() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,null, "updatedSecondName",
-                "updatedThirdName","updatedE1@gmail.com", "updatedPhoneNumber", null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + coachToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+        // test with missing password.
+        coachToBeCreated = coachBuilder.copyFrom(coach3).build();
+        coachToBeCreated.getAccount().setPassword(null);
+        testUtil.shouldNotCreateNewCoachAccountWithMissingRequiredFields(coachToBeCreated, ownerToken);
     }
 
     @Test
-    void shouldNotUpdateCoachAccountWithoutSecondName() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void shouldNotCreateNewCoachAccountWithoutAccessToken() {
+        /*
+         * It checks that you can't create new coach account without access token.
+         * It checks that the response status code is 400 (BAD_REQUEST).
+         * I have chosen coach3 as it's not saved to the database in the setup method.
+         * */
+        ResponseEntity<AccountProfileDto> response = testUtil.attemptCreateCoachAccount(coach3, null);
+        AssertionsForClassTypes.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
 
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", null,
-                "updatedThirdName","updatedE1@gmail.com", "updatedPhoneNumber", null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + coachToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
     }
+
+    /*
+     * Get My Account
+     * */
     @Test
-    void shouldNotUpdateCoachAccountWithoutThirdName() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void coachShouldGetHisAccountDetails() {
+        /*
+         * It checks that authenticated coach can get his account details.
+         * account details: firstName, secondName, thirdName, email, and phoneNumber.
+         * It checks that the response status code is 200 (OK).
+         * It checks that the returned accountProfileDto is the same as the accountProfileDto of the provided coach.
+         * Here I have used coach1 as it's logged in the setup method resulting coachToken
+         * */
+        AccountProfileDto expected = AccountMapper.accountEntityToAccountProfileDto(coach1.getAccount());
 
+        ResponseEntity<AccountProfileDto> response = testUtil.attemptGetCoachAccountDetails(coach1, coachToken);
+        AccountProfileDto actual = response.getBody();
 
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
-                null,"updatedE1@gmail.com", "updatedPhoneNumber", null, null);
+        AssertionsForClassTypes.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + coachToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+        // I Ignore fields of LocalDataTime to avoid precision issues
+        AssertionsForClassTypes.assertThat(actual).usingRecursiveComparison().ignoringFieldsOfTypes(LocalDateTime.class).isEqualTo(expected);
     }
 
     @Test
-    void shouldNotUpdateCoachAccountWithoutEmail() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void ownerAndClientShouldNotGetCoachAccountDetails() {
+        /*
+         * It checks that owners and clients can't get coach accounts details.
+         * account details: firstName, secondName, thirdName, email, and phoneNumber.
+         * It checks that the response status code is 403 (FORBIDDEN).
+         * Here I have used coach1 as it's logged in the setup method resulting coachToken.
+         * user is known to be (owner / coach / client) from the scope of the access token.
+         * */
 
+        // Test that owner can't get coach account details
+        ResponseEntity<AccountProfileDto> response = testUtil.attemptGetCoachAccountDetails(coach1, ownerToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
-                "updatedThirdName",null, "updatedPhoneNumber", null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + coachToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+        // Test that client can't get coach account details
+        response = testUtil.attemptGetCoachAccountDetails(coach1, clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
-    @Test
-    void shouldNotUpdateCoachAccountWithoutPhoneNumber() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
-                "updatedThirdName","updatedE1@gmail.com", null, null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + coachToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-    }
-
-
 
     @Test
-    void shouldChangePassword() {
+    void shouldNotGetCoachAccountDetailsWithoutAccessToken() {
+        /*
+         * It checks that getting the coach account details without access token isn't achievable.
+         * It checks that the response status code is 401 (UNAUTHORIZED).
+         * Here I have chosen coach3 as it's not saved to the database in the setup method.
+         * */
+        ResponseEntity<AccountProfileDto> response = testUtil.attemptGetCoachAccountDetails(coach3, null);
 
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // new password
-        String newPassword = "1234";
-
-        ChangePasswordDto changePasswordDto = new ChangePasswordDto(newPassword);
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + coachToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity request = new HttpEntity<>(changePasswordDto, headers);
-        HttpStatusCode httpStatusCode = restTemplate.exchange(baseUrl + "/coach-account-manager/password",
-                HttpMethod.PUT, request, void.class).getStatusCode();
-
-        assertThat(httpStatusCode).isNotNull();
-        assertThat(httpStatusCode).isEqualTo(HttpStatus.OK);
-
-        String token = login("1", newPassword, "http://localhost:" + port + "/api/login/coach");
-
-        assertThat(token).isNotNull();
-
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
+
+    /*
+     * Get all coaches tests
+     * */
     @Test
-    void shouldNotUpdateCoachAccountPasswordWithoutTheNewPassword() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void ownerShouldGetAllCoaches() {
+        /*
+         * Given access token with owner scope you should be able to get a list of all coaches in the system.
+         * It checks that the response status code is 200 (OK).
+         * It checks that all coaches in the system are returned.
+         * It checks that all coaches returned are the same ones saved previously in the coach table in the database.
+         * */
 
-        // new password
-        String newPassword = null;
+        // I have chosen coach1 & coach2 as they are saved to the database in the setup method.
+        List<AccountProfileDto> expected = Stream.of(coach1, coach2)
+                .map(Coach::getAccount)
+                .map(AccountMapper::accountEntityToAccountProfileDto)
+                .toList();
 
-        ChangePasswordDto changePasswordDto = new ChangePasswordDto(newPassword);
-        HttpHeaders headers = new HttpHeaders();
+        ResponseEntity<List<AccountProfileDto>> response = testUtil.attemptGetAllCoaches(ownerToken);
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + coachToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        List<AccountProfileDto> actual = response.getBody();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        HttpEntity request = new HttpEntity<>(changePasswordDto, headers);
-
-        try{
-            HttpStatusCode httpStatusCode = restTemplate.exchange(baseUrl + "/coach-account-manager/password",
-                    HttpMethod.PUT, request, void.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
+        // I ignore fields of type LocalDateTime to avoid precision errors.
+        assertThat(actual.size()).isEqualTo(expected.size());
+        actual
+                .forEach(
+                        e -> assertThat(e)
+                                .usingRecursiveComparison()
+                                .ignoringFieldsOfTypes(LocalDateTime.class)
+                                .isIn(expected)
+                );
     }
-
 
     @Test
-    void deleteCoachAccount() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void clientAndCoachShouldNotGetAllCoaches() {
+        /*
+         * Given access token with scope coach or client, you shouldn't be able to get a list of all coaches.
+         * It checks that the response status code is 403 (FORBIDDEN).
+         * */
 
-        HttpHeaders headers = new HttpHeaders();
+        // checks that coach can't get list of all coaches
+        testUtil.coachAndClientShouldNotGetAllCoaches(coachToken);
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        DeleteAccountDto deleteAccountDto = new DeleteAccountDto(null, "1");
-        HttpEntity request = new HttpEntity<>(deleteAccountDto,headers);
-        HttpStatusCode responseStatusCode = restTemplate.exchange(baseUrl + "/coach-account-manager",
-                HttpMethod.DELETE, request, void.class).getStatusCode();
-
-        assertThat(responseStatusCode).isNotNull().isEqualTo(HttpStatus.OK);
+        // checks that client can't get list of all coaches
+        testUtil.coachAndClientShouldNotGetAllCoaches(clientToken);
     }
 
-    // utility method to encapsulate the login logic.
-    String login(String username, String password, String url){
+    @Test
+    void shouldNotGetAllCoachesWithoutAccessToken() {
+        /*
+         * Given No access token, you shouldn't be able to get a list of all coaches.
+         * It checks that the response status code is 401 (UNAUTHORIZED).
+         * */
+        ResponseEntity<List<AccountProfileDto>> response = testUtil.attemptGetAllCoaches(null);
 
-        // Create the basic auth request to the api/login/owner endpoint.
-        String plainCredentials  = username + ":" + password;
-        byte[] plainCredentialsBytes = plainCredentials.getBytes();
-
-        // Encode the basic authentication request.
-        byte[] base64CredentialsBytes = Base64.encodeBase64(plainCredentialsBytes);
-        String base64Credentials= new String(base64CredentialsBytes);
-
-        // Create the header object
-        HttpHeaders basicAuthHeaders = new HttpHeaders();
-        basicAuthHeaders.add("Authorization", "Basic " + base64Credentials);
-
-        // Perform login to get the token.
-        HttpEntity<String> basicAuthRequest = new HttpEntity<String>(basicAuthHeaders);
-        String  token = restTemplate.postForObject(url, basicAuthRequest
-                ,String.class);
-
-        return token;
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-    // utility method to get the base url
-    String getBaseUrl(){
-        String baseUrl = "http://localhost:" + port + "/api";
-        return baseUrl;
+    /*
+     * Update coach account tests
+     * */
+    @Test
+    void coachShouldUpdateHisOwnAccount() {
+        /*
+         * Given access token with scope coach, you should be able to update the coach account.
+         * Fields you should be able to update are (firstName, secondName, thirdName, email, and phoneNumber)
+         * It checks that the response status code is 200 (OK).
+         * In addition to checking that the updates are reflected (the accountProfileDto sent, is the same as the one
+         * returned in the response body).
+         * Here I have chosen "coach1" as it's saved on the database on the setup method and "coachToken" belongs to it.
+         * */
+        Account coachAccount = coach1.getAccount();
+
+        //perform updates.
+        coach1 = testUtil.performUpdatesOnCoachAccount(coach1);
+
+        // expected
+        AccountProfileDto expected = AccountMapper.accountEntityToAccountProfileDto(coachAccount);
+
+        ResponseEntity<AccountProfileDto> response = testUtil.attemptUpdateCoachAccount(coach1, coachToken);
+
+        // actual
+        AccountProfileDto actual = response.getBody();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // I ignore fields of type LocalDateTime to avoid precision errors in createdAt and updatedAt fields.
+        assertThat(actual).usingRecursiveComparison().ignoringFieldsOfTypes(LocalDateTime.class).isEqualTo(expected);
 
     }
+
+    @Test
+    void ownerAncClientShouldNotUpdateCoachAccount() {
+        /*
+         * Given access token with scope owner or client, you shouldn't be able to update coach account.
+         * It checks that the response status code is 403 (FORBIDDEN).
+         * */
+
+        // perform updates
+        coach1 = testUtil.performUpdatesOnCoachAccount(coach1);
+
+        // checks that owner can't update coach account.
+        testUtil.ownerAndClientShouldNotUpdateCoachAccount(coach1, ownerToken);
+
+        // checks that client can't update coach account.
+        testUtil.ownerAndClientShouldNotUpdateCoachAccount(coach1, clientToken);
+    }
+
+    @Test
+    void shouldNotUpdateCoachAccountWithMissingRequiredFields() {
+        /*
+         * Given that you have an access token with scope coach, you can't update
+         * coach account while missing any of the required fields.
+         * Required fields are: firstName, secondName, thirdName, email, and phoneNumber.
+         * It checks that the response status code it 400 (BAD_REQUEST).
+         * coach1: is the coach to be updated, I have chosen it as it is saved on the database in setup method.
+         * */
+
+        Coach.Builder coachBuilder = new Coach.Builder();
+        Coach sampleCoach = coachBuilder.copyFrom(coach1).build();
+
+        // can't update coach account without first name .
+        sampleCoach.getAccount().setFirstName(null);
+        testUtil.shouldNotUpdateCoachAccountWithMissingRequiredFields(sampleCoach, coachToken);
+
+        // can't update coach account without second name.
+        sampleCoach = coachBuilder.copyFrom(coach1).build();
+        sampleCoach.getAccount().setSecondName(null);
+        testUtil.shouldNotUpdateCoachAccountWithMissingRequiredFields(sampleCoach, coachToken);
+
+        // can't update coach account without third name.
+        sampleCoach = coachBuilder.copyFrom(coach1).build();
+        sampleCoach.getAccount().setThirdName(null);
+        testUtil.shouldNotUpdateCoachAccountWithMissingRequiredFields(sampleCoach, coachToken);
+
+        // can't update coach account without email.
+        sampleCoach = coachBuilder.copyFrom(coach1).build();
+        sampleCoach.getAccount().setEmail(null);
+        testUtil.shouldNotUpdateCoachAccountWithMissingRequiredFields(sampleCoach, coachToken);
+
+        // can't update coach account without phone number.
+        sampleCoach = coachBuilder.copyFrom(coach1).build();
+        sampleCoach.getAccount().setPhoneNumber(null);
+        testUtil.shouldNotUpdateCoachAccountWithMissingRequiredFields(sampleCoach, coachToken);
+
+    }
+
+    @Test
+    void shouldNotUpdateCoachAccountWithoutAccessToken() {
+        /*
+         * It checks that you shouldn't be able to update coach account without access token.
+         * It checks that the response status code is 401 (UNAUTHORIZED).
+         * I have used coach1 is it's saved to the database in the setup method.
+         * */
+
+        // perform updates on coach1
+        coach1 = testUtil.performUpdatesOnCoachAccount(coach1);
+
+        ResponseEntity<AccountProfileDto> response = testUtil.attemptUpdateCoachAccount(coach1, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    /*
+     * Change coach account password tests
+     * */
+    @Test
+    void coachShouldChangeHisOwnAccountPassword() {
+        /*
+         * Given access token with scope coach you should be able to change the accounts password for that coach.
+         * It checks that the response status code is 200 (OK).
+         * */
+
+        ResponseEntity<String> response = testUtil.attemptChangeCoachAccountPassword("1234", coachToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    }
+
+    @Test
+    void coachShouldChangeHisOwnAccountPasswordWithEmptyPassword() {
+        /*
+         * Given access token with scope coach you should not be able to change his own account password with empty password.
+         * It checks that the response status code is 400 (BAD_REQUEST).
+         * */
+
+        ResponseEntity<String> response = testUtil.attemptChangeCoachAccountPassword(null, coachToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void ownerAndClientShouldNotChangeCoachAccountPassword() {
+        /*
+         * Given access token with scope owner or client you should not be able to change the accounts password of a coach.
+         * It checks that the response status code is 403 (FORBIDDEN).
+         * */
+
+
+        // checks that owner can't change coach account password
+        ResponseEntity<String> response = testUtil.attemptChangeCoachAccountPassword("1234", ownerToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        // checks that client can't change coach account password
+        response = testUtil.attemptChangeCoachAccountPassword("1234", clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void shouldNotChangeCoachAccountPasswordWithoutAccessToken() {
+        /*
+         * You should not be able to change the accounts password of a coach without access token.
+         * It checks that the response status code is 403 (UNAUTHORIZED).
+         * */
+        ResponseEntity<String> response = testUtil.attemptChangeCoachAccountPassword("1234", null);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    /*
+     * Delete coach account tests
+     * */
+    @Test
+    void ownerShouldDeleteCoachAccount() {
+        /*
+         * Given access token with scope owner , and a deleteAccountDto you should be able to delete coach account.
+         * deleteAccountDto: contains the email or phoneNumber or both for the coach account to be deleted.
+         * It checks that the response status code is 200 (OK).
+         * In addition to checking that you can delete coach account with his email and phone number or his email only or
+         * his phone number only.
+         * */
+
+        // check that owner can delete coach account by providing his email and phone number
+        testUtil.shouldDeleteCoachAccount(
+                new DeleteAccountDto(
+                        coach1.getAccount().getEmail(), coach1.getAccount().getPhoneNumber()
+                ),
+                ownerToken);
+
+        // check that owner can delete coach account by providing his email only.
+        testUtil.shouldDeleteCoachAccount(
+                new DeleteAccountDto(
+                        coach1.getAccount().getEmail(), null
+                ),
+                ownerToken);
+
+        // check that owner can delete coach account by providing his phone number only.
+        testUtil.shouldDeleteCoachAccount(
+                new DeleteAccountDto(
+                        null, coach1.getAccount().getPhoneNumber()
+                ),
+                ownerToken);
+    }
+
+    @Test
+    void coachAndClientShouldNotDeleteCoachAccount() {
+        /*
+         * Given access token with scope coach or client , and a deleteAccountDto you should not be able to delete coach account.
+         * deleteAccountDto: contains the email or phoneNumber or both for the coach account to be deleted.
+         * It checks that the response status code is 403 (FORBIDDEN).
+         */
+
+        // checks that coach can't delete coach account.
+        ResponseEntity<String> response = testUtil.attemptDeleteCoachAccountPassword(
+                new DeleteAccountDto(
+                        coach1.getAccount().getEmail(), coach1.getAccount().getPhoneNumber()
+                ),
+                coachToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        // checks that client can't delete coach account.
+        response = testUtil.attemptDeleteCoachAccountPassword(
+                new DeleteAccountDto(
+                        coach1.getAccount().getEmail(), coach1.getAccount().getPhoneNumber()
+                ),
+                clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+    }
+
+    @Test
+    void shouldNotDeleteCoachAccountWithoutAccessToken() {
+        /*
+         * should not be able to delete coach account without access token
+         * deleteAccountDto: contains the email or phoneNumber or both for the coach account to be deleted.
+         * It checks that the response status code is 403 (UNAUTHORIZED).
+         */
+
+        ResponseEntity<String> response = testUtil.attemptDeleteCoachAccountPassword(
+                new DeleteAccountDto(
+                        coach1.getAccount().getEmail(), coach1.getAccount().getPhoneNumber()
+                ),
+                null);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+
+    }
+
 
 }

@@ -48,7 +48,12 @@ public class Coach {
             this.account = accountBuilder.copyFrom(account).build();
             return this;
         }
-
+        public Builder copyFrom(Coach coach){
+            Account.Builder accountBuilder = new Account.Builder();
+            this.account = accountBuilder.copyFrom(coach.getAccount()).build();
+            this.id = coach.id;
+            return this;
+        }
         public Coach build(){
             Coach coach = new Coach();
             coach.id = this.id;
