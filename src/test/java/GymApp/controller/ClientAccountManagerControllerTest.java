@@ -3,11 +3,18 @@ package GymApp.controller;
 import GymApp.dto.*;
 import GymApp.entity.Account;
 import GymApp.entity.Client;
+import GymApp.entity.Coach;
 import GymApp.entity.Owner;
 import GymApp.service.AccountService;
 import GymApp.service.ClientService;
+import GymApp.service.CoachService;
 import GymApp.service.OwnerService;
+import GymApp.util.ClientAccountManagerTestUtil;
+import GymApp.util.CoachAccountManagerControllerTestUtil;
+import GymApp.util.GeneralUtil;
+import GymApp.util.entityAndDtoMappers.ClientMapper;
 import com.github.dockerjava.zerodep.shaded.org.apache.commons.codec.binary.Base64;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,9 +33,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
@@ -41,632 +51,518 @@ class ClientAccountManagerControllerTest {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:latest")
             .withDatabaseName("db").withUsername("myuser");
 
-    private static String ownerToken;
-    private static String clientToken;
-    private static List<Account> ownerAccounts = new ArrayList<>();
-    private static List<Account> clientAccounts = new ArrayList<>();
     @Autowired
     RestTemplate restTemplate;
-    @Autowired
-    ClientService clientService;
 
     @Autowired
-    OwnerService ownerService;
-
+    private OwnerService ownerService;
     @Autowired
-    AccountService accountService;
+    private CoachService coachService;
+    @Autowired
+    private ClientService clientService;
 
     @LocalServerPort
-    private int port;
+    private int port; // holds the random port number.
 
-    @BeforeAll
-    static void generalSetUp(){
+    private static String ownerToken;  // holds token with owner scope.
+    private static String coachToken;  // holds token with coach scope.
+    private static String clientToken; // holds token with client scope.
+    private static final String rawPassword = "123"; // hold raw password "123".
+    // BCrypt password for raw password "123"
+    private static final String bCryptPassword = "$2a$12$fdQCjXHktjZczz5hlHg77u8bIXUQdzGQf5k7ulN.cxzhW2vidHzSu";
 
-        // "123" encoded with bCrypt
-        String bCryptPassword = "$2a$12$fdQCjXHktjZczz5hlHg77u8bIXUQdzGQf5k7ulN.cxzhW2vidHzSu";
 
-        // Create 2 accounts
-        Account.Builder accountBuilder  = new Account.Builder();
-        Account acc1 = accountBuilder
-                .firstName("f1")
-                .secondName("s1")
-                .thirdName("t1")
-                .email("e1@gmail.com")
-                .phoneNumber("1")
-                .password(bCryptPassword)
-                .build();
+    private static final Owner.Builder ownerBuilder = new Owner.Builder();
+    private static final Coach.Builder coachBuilder = new Coach.Builder();
+    private static final Client.Builder clientBuilder = new Client.Builder();
+    private static final Account.Builder accountBuilder = new Account.Builder();
 
-        Account acc2 = accountBuilder
-                .firstName("f2")
-                .secondName("s2")
-                .thirdName("t2")
-                .email("e2@gmail.com")
-                .phoneNumber("2")
-                .password(bCryptPassword)
-                .build();
+    private static Client client1 = clientBuilder.account(
+            accountBuilder
+                    .firstName("f1")
+                    .secondName("s1")
+                    .thirdName("t1")
+                    .email("e1@gmail.com")
+                    .phoneNumber("1")
+                    .password(bCryptPassword)
+                    .build()
+    ).birthDate(LocalDate.of(2024, 5, 16)).build();
 
-        // this account will be used as an owner account.
-        Account acc3 = accountBuilder
-                .firstName("f3")
-                .secondName("s3")
-                .thirdName("t3")
-                .email("e3@gmail.com")
-                .phoneNumber("3")
-                .password(bCryptPassword)
-                .build();
+    private static final Client client2 = clientBuilder.account(
+            accountBuilder
+                    .firstName("f2")
+                    .secondName("s2")
+                    .thirdName("t2")
+                    .email("e2@gmail.com")
+                    .phoneNumber("2")
+                    .password(bCryptPassword)
+                    .build()
+    ).birthDate(LocalDate.of(2024, 5, 16)).build();
 
-        // add newly created accounts to the client accounts list.
-        clientAccounts.add(acc1);
-        clientAccounts.add(acc2);
+    private static final Client client3 = clientBuilder.account(
+            accountBuilder
+                    .firstName("f3")
+                    .secondName("s3")
+                    .thirdName("t3")
+                    .email("e3@gmail.com")
+                    .phoneNumber("3")
+                    .password(bCryptPassword)
+                    .build()
+    ).birthDate(LocalDate.of(2024, 5, 16)).build();
 
-        // add the owner account the owner account list
-        ownerAccounts.add(acc3);
+    private static final Coach coach = coachBuilder.account(
+            accountBuilder
+                    .firstName("f4")
+                    .secondName("s4")
+                    .thirdName("t4")
+                    .email("e4@gmail.com")
+                    .phoneNumber("4")
+                    .password(bCryptPassword)
+                    .build()
+    ).build();
 
-    }
+    private static final Owner owner = ownerBuilder.account(
+            accountBuilder
+                    .firstName("f5")
+                    .secondName("s5")
+                    .thirdName("t5")
+                    .email("e5@gmail.com")
+                    .phoneNumber("5")
+                    .password(bCryptPassword)
+                    .build()
+    ).build();
+
+    private ClientAccountManagerTestUtil testUtil;
+
+
     @BeforeEach
     void setUp() {
-        // delete all clients & owners to start fresh.
-        clientService.deleteAll();
-        ownerService.deleteAll();
-
-
-        // Make them client accounts.
-        Client.Builder clientBuilder = new Client.Builder();
-        Account.Builder accountBuilder = new Account.Builder();
-        Client client1 = clientBuilder
-                .account(
-                        accountBuilder.copyFrom(clientAccounts.get(0)).build()
-                )
-                .birthDate(LocalDate.of(2024,3,1))
-                .build();
-        Client client2 = clientBuilder
-                .account(
-                        accountBuilder.copyFrom(clientAccounts.get(1)).build()
-                )
-                .birthDate(LocalDate.of(2024,3,1))
-                .build();
+        // initialize the database.
+        ownerService.save(owner);
+        coachService.save(coach);
         clientService.save(client1);
         clientService.save(client2);
 
-        // create owner account.
-        Owner.Builder ownerBuilder = new Owner.Builder();
-        Owner owner = ownerBuilder
-                .account(ownerAccounts.get(0))
-                .build();
-        ownerService.save(owner);
+        // perform login to get token with scopes (owner, coach, and client) respectively.
+        ownerToken = GeneralUtil.login(owner.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port) + "/login/owner", restTemplate);
+        coachToken = GeneralUtil.login(coach.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port) + "/login/coach", restTemplate);
+        clientToken = GeneralUtil.login(client1.getAccount().getEmail(), rawPassword,
+                GeneralUtil.getBaseUrl(port) + "/login/client", restTemplate);
 
-        // get token as a result of client login
-        clientToken = login("1", "123",
-                getBaseUrl()+ "/login/client");
-
-        // get token as a result of owner login.
-        ownerToken = login("3", "123",
-                getBaseUrl()+ "/login/owner");
+        // set up the util class
+        testUtil = new ClientAccountManagerTestUtil(port, restTemplate);
+    }
+    @AfterEach
+    void tearDown(){
+        ownerService.deleteAll();
+        coachService.deleteAll();
+        clientService.deleteAll();
     }
 
+    /*
+    * Create New client account tests
+    * */
     @Test
-    void createNewClientAccount() {
-        // because port number is generated randomly.
-        String baseUrl = getBaseUrl();
+    void ownerShouldCreateNewClientAccount(){
+        /*
+        * Given access token with scope owner you should be able to create client account.
+        * It checks that the response status code is 200 (Ok)
+        * It checks that the returned Client account profile dto has the same data as the send in
+        * create client account dto
+        * Here I have chosen to use client3 as it isn't saved to the database in the setUp method.
+        * */
 
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
+        ClientAccountProfileDto expected = ClientMapper.clientEntityToClientAccountProfileDto(client3);
+        ResponseEntity<ClientAccountProfileDto> response = testUtil.attemptCreateNewClientAccount(client3, ownerToken);
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
+        ClientAccountProfileDto actual = response.getBody();
 
-        // new owner account values
-        String firstName = "f4";
-        String secondName = "s4";
-        String thirdName = "t4";
-        String email = "e4@gmail.com";
-        String phoneNumber = "4";
-        String password = "123";
-        LocalDate birthDate = LocalDate.of(2024, 3, 1);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        // initalize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto(firstName, secondName, thirdName, email, phoneNumber,
-                password);
-
-        CreateClientAccountDto createClientAccountDto = new CreateClientAccountDto(createAccountDto, birthDate);
-
-        HttpEntity<CreateClientAccountDto> request = new HttpEntity<>(createClientAccountDto, headers);
-
-        ClientAccountProfileDto createdAccount = restTemplate.exchange(baseUrl + "/client-account-manager",
-                HttpMethod.POST, request, ClientAccountProfileDto.class).getBody();
-
-        assertThat(createdAccount).isNotNull();
-
-        //  get accountProfile Dto, doesn't include birthdate.
-        AccountProfileDto accountProfileDto = createdAccount.accountProfileDto();
-
-        assertThat(accountProfileDto).isNotNull();
-        assertThat(accountProfileDto.firstName()).isEqualTo(firstName);
-        assertThat(accountProfileDto.secondName()).isEqualTo(secondName);
-        assertThat(accountProfileDto.thirdName()).isEqualTo(thirdName);
-        assertThat(accountProfileDto.email()).isEqualTo(email);
-        assertThat(accountProfileDto.phoneNumber()).isEqualTo(phoneNumber);
-        assertThat(createdAccount.birthDate()).isEqualTo(birthDate);
-    }
-    @Test
-    void shouldNotCreateClientAccountWithoutFirstName(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
-
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto(null, "s3", "t3", "e3",
-                "3", "123");
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/client-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
+        // 1) I have Ignored the id from the comparison as id represents the database id which I couldn't predict
+        // before saving the client to the database.
+        // 2) I have Ignored fields of time "LocalDateTime" to avoid precision errors.
+        assertThat(actual)
+                .usingRecursiveComparison()
+                .ignoringFields("accountProfileDto.id")
+                .ignoringFieldsOfTypes(LocalDateTime.class)
+                .isEqualTo(expected);
 
     }
     @Test
-    void shouldNotCreateClientAccountWithoutSecondName(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void coachAndClientShouldNotCreateNewClientAccount(){
+        /*
+        * Given access token with scope coach or client you should not be able to create client accounts.
+        * It checks that the response status code is 403 (FORBIDDEN).
+        * */
+        ResponseEntity<ClientAccountProfileDto> response = testUtil.attemptCreateNewClientAccount(client3, coachToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
+        response = testUtil.attemptCreateNewClientAccount(client3, clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+    @Test
+    void shouldNotCreateNewClientAccountWithoutRequiredFields(){
+       /*
+       * It checks that you can't create client account without required fields.
+       * Required fields are: firstName, secondName, thirdName, email, phoneNumber, password and birthdate
+       * It checks that the response status code is 400 (BAD_REQUEST).
+       * Here I have chosen to use client3 as it isn't saved to the database in the setUp method.
+       * */
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
+        // without firstName
+        Client sampleClient = clientBuilder.copyFrom(client3).build();
+        sampleClient.getAccount().setFirstName(null);
+        testUtil.shouldNotCreateNewClientAccountWithoutRequiredFields(sampleClient, ownerToken);
 
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", null, "t3", "e3",
-                "3", "123");
+        // without secondName
+        sampleClient = clientBuilder.copyFrom(client3).build();
+        sampleClient.getAccount().setSecondName(null);
+        testUtil.shouldNotCreateNewClientAccountWithoutRequiredFields(sampleClient, ownerToken);
 
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/client-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+        // without thirdName
+        sampleClient = clientBuilder.copyFrom(client3).build();
+        sampleClient.getAccount().setThirdName(null);
+        testUtil.shouldNotCreateNewClientAccountWithoutRequiredFields(sampleClient, ownerToken);
 
+        // without email
+        sampleClient = clientBuilder.copyFrom(client3).build();
+        sampleClient.getAccount().setEmail(null);
+        testUtil.shouldNotCreateNewClientAccountWithoutRequiredFields(sampleClient, ownerToken);
+
+        // without phone number
+        sampleClient = clientBuilder.copyFrom(client3).build();
+        sampleClient.getAccount().setPhoneNumber(null);
+        testUtil.shouldNotCreateNewClientAccountWithoutRequiredFields(sampleClient, ownerToken);
+
+        // without password
+        sampleClient = clientBuilder.copyFrom(client3).build();
+        sampleClient.getAccount().setPassword(null);
+        testUtil.shouldNotCreateNewClientAccountWithoutRequiredFields(sampleClient, ownerToken);
+
+        // without birthdate
+        sampleClient = clientBuilder.copyFrom(client3).build();
+        sampleClient.setBirthDate(null);
+        testUtil.shouldNotCreateNewClientAccountWithoutRequiredFields(sampleClient, ownerToken);
 
     }
     @Test
-    void shouldNotCreateClientAccountWithoutThirdName(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void shouldNotCreateNewClientAccountWithoutAccessToken(){
+        /*
+        * It checks that you can't create client account without access token.
+        * It checks that the response status code is 401 (UNAUTHORIZED).
+        * I have used client3 as it's not saved to the database in the setUp method.
+        * */
+        ResponseEntity<ClientAccountProfileDto> response = testUtil.attemptCreateNewClientAccount(client3, null);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
 
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
+    /*
+    * Get My account tests.
+    * */
+    @Test
+    void clientShouldGetHisOwnAccountDetails(){
+        /*
+        * Given access token with scope client, you should be able to get the account details of the client to whom
+        * the access token belongs.
+        * It checks that the response status code is 200 (OK).
+        * It checks that the return client account profile dto contains the correct data.
+        * */
+        ClientAccountProfileDto expected = ClientMapper.clientEntityToClientAccountProfileDto(client1);
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
+        ResponseEntity<ClientAccountProfileDto> response = testUtil.attemptGetMyAccountDetails(client1, clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", null, "e3",
-                "3", "123");
+        ClientAccountProfileDto actual = response.getBody();
 
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/client-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
 
+        // 1) I have Ignored the id from the comparison as id represents the database id which I couldn't predict
+        // before saving the client to the database.
+        // 2) I have Ignored fields of time "LocalDateTime" to avoid precision errors.
+        assertThat(actual)
+                .usingRecursiveComparison()
+                .ignoringFieldsOfTypes(LocalDateTime.class)
+                .ignoringFields("accountProfileDto.id")
+                .isEqualTo(expected);
+    }
+    @Test
+    void ownerAndCoachShouldNotGetClientAccountDetails(){
+        /*
+        * Given access token with scope owner or coach you should not get client account details.
+        * It checks that the response status code is 403 (FORBIDDEN).
+        * */
+
+        // Check that owner can't
+        ResponseEntity<ClientAccountProfileDto> response = testUtil.attemptGetMyAccountDetails(client1, ownerToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        // Check that coach can't
+        response = testUtil.attemptGetMyAccountDetails(client1, coachToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+    @Test
+    void shouldNotGetClientAccountDetailsWithoutAccessToken(){
+        /*
+        * It checks that you can't get the client account details without access token.
+        * It checks that the response status code is 401 (UNAUTHORIZED).
+        * */
+        ResponseEntity<ClientAccountProfileDto> response = testUtil.attemptGetMyAccountDetails(client1, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    /*
+    * Get All clients tests.
+    * */
+    @Test
+    void ownerAndCoachShouldGetAllClients(){
+        /*
+        * Given access token with scope (owner / coach) you should be able to get all client accounts.
+        * It checks that the response status code is 200 (OK).
+        * It checks that the returned client accounts are the same as the ones saved to the database in the setUp method.
+        * Here I have used client1 & client2 in the expected as they are already saved to the database in the setUp method.
+        * */
+        List<Client> clients = List.of(client1, client2);
+        testUtil.shouldGetAllClients(ownerToken, clients);
+        testUtil.shouldGetAllClients(coachToken, clients);
+    }
+    @Test
+    void clientShouldNotGetAllClients(){
+        /*
+        * Given access token with scope client you shouldn't be able to get all client accounts.
+        * It checks that the response status code is 403 (FORBIDDEN).
+        * */
+        ResponseEntity<List<ClientAccountProfileDto>> response = testUtil.attemptGetAllClients(clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 
     }
     @Test
-    void shouldNotCreateClientAccountWithoutEmail(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void shouldNotGetAllClientsWithoutAccessToken(){
+        /*
+        * Given no access token you should not be able to get all clients.
+        * It checks that the response status code is 401 (UNAUTHORIZED)
+        * */
+        ResponseEntity<List<ClientAccountProfileDto>> response = testUtil.attemptGetAllClients(null);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
 
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
+    }
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
+    /*
+    * update client account tests
+    * */
+    @Test
+    void clientShouldUpdateHisOwnAccount(){
+        /*
+        * Given access token with scope client you should be able to update the client to which the access token belongs.
+        * It checks that the response status code is 200 (OK).
+        * It checks that the returned clientAccountProfileDto in the response body is the same as
+        * the one sent in the request body.
+        * */
 
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", "t3", null,
-                "3", "123");
+        // update firstName, secondName, thirdName, email, password, and phone number
+        client1 = testUtil.performUpdatesOnClientAccount(client1);
 
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/client-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+        // expected
+        ClientAccountProfileDto expected = ClientMapper.clientEntityToClientAccountProfileDto(client1);
 
+        ResponseEntity<ClientAccountProfileDto> response = testUtil.attemptUpdateClientAccount(client1, clientToken);
+
+        // actual
+        ClientAccountProfileDto actual = response.getBody();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        //I have Ignored fields of time "LocalDateTime" to avoid precision errors.
+        assertThat(actual)
+                .usingRecursiveComparison()
+                .ignoringFieldsOfTypes(LocalDateTime.class)
+                .isEqualTo(expected);
 
     }
     @Test
-    void shouldNotCreateClientAccountWithoutPhoneNumber(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void ownerAndCoachShouldNotUpdateClientAccount(){
+        /*
+        * Given access toke with scope (coach / owner), you shouldn't be able to update client account.
+        * It checks that the response status code is 403 (FORBIDDEN).
+        * */
 
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
+        client1 = testUtil.performUpdatesOnClientAccount(client1);
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
+        // checks that owner can't update client account.
+        ResponseEntity<ClientAccountProfileDto> response = testUtil.attemptUpdateClientAccount(client1, ownerToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s2", "t3", "e3@gmail.com",
-                null, "123");
-
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/client-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
+        // checks that coach can't update client account.
+        response = testUtil.attemptUpdateClientAccount(client1, coachToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
-
-
     @Test
-    void shouldNotCreateClientAccountWithoutPassword(){
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void shouldNotUpdateClientAccountWithoutRequiredFields(){
+        /*
+         * It checks that you can't create client account without required fields.
+         * Required fields are: firstName, secondName, thirdName, email, phoneNumber, password and birthdate
+         * It checks that the response status code is 400 (BAD_REQUEST).
+         * Here I have chosen client1 as it is already saved to the database in the setUp method and clientToken belongs to it.
+         */
 
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
+        // without firstName
+        Client sampleClient = clientBuilder.copyFrom(client1).build();
+        sampleClient.getAccount().setFirstName(null);
+        ResponseEntity<ClientAccountProfileDto> response = testUtil.attemptUpdateClientAccount(sampleClient, clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
+        // without secondName
+        sampleClient = clientBuilder.copyFrom(client1).build();
+        sampleClient.getAccount().setSecondName(null);
+        response = testUtil.attemptUpdateClientAccount(sampleClient, clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
-        // initialize the dto
-        CreateAccountDto createAccountDto = new CreateAccountDto("f3", "s3", "t3", "e3",
-                "3", null);
+        // without thirdName
+        sampleClient = clientBuilder.copyFrom(client1).build();
+        sampleClient.getAccount().setThirdName(null);
+        response = testUtil.attemptUpdateClientAccount(sampleClient, clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
-        HttpEntity<CreateAccountDto> request = new HttpEntity<>(createAccountDto, headers);
-        try{
-            HttpStatusCode responseCode = restTemplate.exchange(baseUrl + "/client-account-manager",
-                    HttpMethod.POST, request, HttpStatusCode.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
-
-    }
-
+        // without email
+        sampleClient = clientBuilder.copyFrom(client1).build();
+        sampleClient.getAccount().setEmail(null);
+        response = testUtil.attemptUpdateClientAccount(sampleClient, clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
 
-    @Test
-    void shouldGetMyProfile() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+        // without phone number
+        sampleClient = clientBuilder.copyFrom(client1).build();
+        sampleClient.getAccount().setPhoneNumber(null);
+        response = testUtil.attemptUpdateClientAccount(sampleClient, clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
-        // Sending request associated with the token to get accountProfileDto for the owner embedded in the token
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + clientToken);
-        HttpEntity<String> request = new HttpEntity<String>(headers);
-        ClientAccountProfileDto clientAccount = restTemplate.exchange(baseUrl + "/client-account-manager",
-                HttpMethod.GET, request, ClientAccountProfileDto.class).getBody();
-
-        assertThat(clientAccount).isNotNull();
-        assertThat(clientAccount.accountProfileDto()).isNotNull();
-        assertThat(clientAccount.accountProfileDto().email()).isNotNull().isEqualTo("e1@gmail.com");
-    }
-
-    @Test
-    void getAllClientsAccounts() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl() ;
-
-        // Sending request associated with the token to get a list of all clients.
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + ownerToken);
-
-        HttpEntity<String> request = new HttpEntity<String>(headers);
-        ParameterizedTypeReference<List<ClientAccountProfileDto>>
-                responseType = new ParameterizedTypeReference<List<ClientAccountProfileDto>>() {};
-        List<ClientAccountProfileDto> allClientAccounts = restTemplate.exchange(baseUrl + "/client-account-manager/clients",
-                HttpMethod.GET, request, responseType).getBody();
-
-        // Check that there is 2 owner accounts returned
-        assertThat(allClientAccounts).isNotNull();
-        assertThat(allClientAccounts.size()).isEqualTo(2);
-
-        // check that the owners returned are the same ones which we inserted by the checking their emails.
-        List<String>possibleEmails = List.of(clientAccounts.get(0).getEmail(), clientAccounts.get(1).getEmail());
-
-        assertThat(allClientAccounts.get(0).accountProfileDto()).isNotNull();
-        assertThat(allClientAccounts.get(0).accountProfileDto().email()).isIn(possibleEmails);
-
-        assertThat(allClientAccounts.get(1).accountProfileDto()).isNotNull();
-        assertThat(allClientAccounts.get(1).accountProfileDto().email()).isIn(possibleEmails);
-
-    }
-
-    @Test
-    void updateMyProfile() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // new values to update client account.
-        String updatedFirstName = "updatedFirstName";
-        String updatedSecondName = "updatedSecondName";
-        String updatedThirdName = "updatedThirdName";
-        String updatedEmail = "updatedE1@gmail.com";
-        String updatedPhoneNumber = "updatedPhoneNumber";
-        LocalDate birthDate = LocalDate.of(2024, 3, 1);
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,updatedFirstName, updatedSecondName,
-                updatedThirdName,updatedEmail, updatedPhoneNumber, null, null);
-        ClientAccountProfileDto clientAccountProfileDto = new ClientAccountProfileDto(accountProfileDto, birthDate);
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + clientToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<ClientAccountProfileDto> request = new HttpEntity<>(clientAccountProfileDto, headers);
-        ClientAccountProfileDto updatedClientAccountProfileDto = restTemplate.exchange(baseUrl + "/client-account-manager",
-                HttpMethod.PUT, request, ClientAccountProfileDto.class).getBody();
-
-        AccountProfileDto updatedAccountProfileDto = updatedClientAccountProfileDto.accountProfileDto();
-
-        // check that all updates are reflected.
-        assertThat(updatedAccountProfileDto).isNotNull();
-        assertThat(updatedAccountProfileDto.firstName()).isEqualTo(updatedFirstName);
-        assertThat(updatedAccountProfileDto.secondName()).isEqualTo(updatedSecondName);
-        assertThat(updatedAccountProfileDto.thirdName()).isEqualTo(updatedThirdName);
-        assertThat(updatedAccountProfileDto.email()).isEqualTo(updatedEmail);
-        assertThat(updatedAccountProfileDto.phoneNumber()).isEqualTo(updatedPhoneNumber);
+        // without birthdate
+        sampleClient = clientBuilder.copyFrom(client1).build();
+        sampleClient.setBirthDate(null);
+        response = testUtil.attemptUpdateClientAccount(sampleClient, clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
     }
     @Test
-    void shouldNotUpdateClientAccountWithoutFirstName() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,null, "updatedSecondName",
-                "updatedThirdName","updatedE1@gmail.com", "updatedPhoneNumber", null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + clientToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/client-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+    void shouldNotUpdateClientAccountWithoutAccessToken(){
+        /*
+        * It checks that without access token you can't update client account.
+        * It checks that the response status code is 400 (BAD_REQUEST).
+        * */
+        ResponseEntity<ClientAccountProfileDto> response = testUtil.attemptUpdateClientAccount(client1, null);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    /*
+    * change client account password tests.
+    * */
     @Test
-    void shouldNotUpdateclientAccountWithoutSecondName() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", null,
-                "updatedThirdName","updatedE1@gmail.com", "updatedPhoneNumber", null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + clientToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/client-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+    void clientShouldChangeHisOwnPassword(){
+        /*
+        * Given access token with scope client, you should be able to change the password
+        * for the client to which the access token belongs.
+        * It checks that the response status code is 200 (OK).
+        * */
+        ResponseEntity<String> response = testUtil.attemptChangeClientAccountPassword("1234", clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
     @Test
-    void shouldNotUpdateClientAccountWithoutThirdName() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void ownerAndCoachShouldNotChangeClientPassword(){
+        /*
+         * Given access token with scope owner / coach, you should not be able to change the password
+            for the client to which the access token belongs.
+         * It checks that the response status code is 403 (FORBIDDEN).
+         * */
+        ResponseEntity<String> response = testUtil.attemptChangeClientAccountPassword("1234", ownerToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
-                null,"updatedE1@gmail.com", "updatedPhoneNumber", null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + clientToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/client-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    @Test
-    void shouldNotUpdateClientAccountWithoutEmail() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
-                "updatedThirdName",null, "updatedPhoneNumber", null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + clientToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/client-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+        response = testUtil.attemptChangeClientAccountPassword("1234", coachToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
     @Test
-    void shouldNotUpdateClientAccountWithoutPhoneNumber() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-
-        AccountProfileDto accountProfileDto = new AccountProfileDto(0,"updatedFirstName", "updatedSecondName",
-                "updatedThirdName","updatedE1@gmail.com", null, null, null);
-
-
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + clientToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AccountProfileDto> request = new HttpEntity<>(accountProfileDto, headers);
-        try{
-            AccountProfileDto updatedAccountProfileDto = restTemplate.exchange(baseUrl + "/client-account-manager",
-                    HttpMethod.PUT, request, AccountProfileDto.class).getBody();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
+    void shouldNotChangeClientPasswordWithEmptyPassword(){
+        /*
+         * Given access token with scope client, you should not be able to change the password
+            for the client to which the access token belongs by empty password.
+         * It checks that the response status code is 400 (BAD_REQUEST).
+         * */
+        ResponseEntity<String> response = testUtil.attemptChangeClientAccountPassword("", clientToken);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
     @Test
-    void shouldNotUpdateclientAccountPasswordWithoutTheNewPassword() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
-
-        // new password
-        String newPassword = null;
-
-        ChangePasswordDto changePasswordDto = new ChangePasswordDto(newPassword);
-        HttpHeaders headers = new HttpHeaders();
-
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + clientToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity request = new HttpEntity<>(changePasswordDto, headers);
-
-        try{
-            HttpStatusCode httpStatusCode = restTemplate.exchange(baseUrl + "/coach-account-manager/password",
-                    HttpMethod.PUT, request, void.class).getStatusCode();
-        }
-        catch (HttpClientErrorException e){
-            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-
+    void shouldNotChangeClientPasswordWithoutAccessToken(){
+        /*
+         * You should not be able to change the password of client account without access token.
+         * It checks that the response status code is 401 (UNAUTHORIZED).
+         * */
+        ResponseEntity<String> response = testUtil.attemptChangeClientAccountPassword("1234", null);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-
+    /*
+    * Delete Client account tests
+    * */
     @Test
-    void changePassword() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void ownerShouldDeleteClientAccount(){
+        /*
+        * Given access token of scope owner and a DeleteAccountDto you should be able to delete client account.
+        * DeleteAccountDto: contains the email and phone number of the account you want to delete.
+        * It checks that the response status code is 200 (Ok).
+        * In addition to checking that you can delete client account with email and/or phone number.
+        * Here I have used client1 as it's already saved to the database in the setUp method.
+        * */
 
-        // new password
-        String newPassword = "1234";
+        // tests deletion using email and phone number.
+        testUtil.shouldDeleteClientAccount(
+                new DeleteAccountDto(client1.getAccount().getEmail(), client1.getAccount().getPhoneNumber()),
+                ownerToken);
 
-        ChangePasswordDto changePasswordDto = new ChangePasswordDto(newPassword);
-        HttpHeaders headers = new HttpHeaders();
+        // tests deletion using email only.
+        testUtil.shouldDeleteClientAccount(
+                new DeleteAccountDto(client1.getAccount().getEmail(), null),
+                ownerToken);
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + clientToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity request = new HttpEntity<>(changePasswordDto, headers);
-        HttpStatusCode httpStatusCode = restTemplate.exchange(baseUrl + "/client-account-manager/password",
-                HttpMethod.PUT, request, void.class).getStatusCode();
-
-        assertThat(httpStatusCode).isNotNull();
-        assertThat(httpStatusCode).isEqualTo(HttpStatus.OK);
-
-        String token = login("1", newPassword, "http://localhost:" + port + "/api/login/client");
-
-        assertThat(token).isNotNull();
-
+        // tests deletion using phone number only.
+        testUtil.shouldDeleteClientAccount(
+                new DeleteAccountDto(null, client1.getAccount().getPhoneNumber()),
+                ownerToken);
 
     }
-
     @Test
-    void deleteClientAccount() {
-        // As port number as it's generated randomly.
-        String baseUrl = getBaseUrl();
+    void clientAndCoachShouldNotDeleteClientAccount(){
+        /*
+         * Given access token of scope (coach / client) and a DeleteAccountDto you should Not
+            be able to delete client account.
+         * DeleteAccountDto: contains the email and phone number of the account you want to delete.
+         * It checks that the response status code is 403 (FORBIDDEN).
+         * Here I have used client1 as it's already saved to the database in the setUp method.
+         * */
 
-        HttpHeaders headers = new HttpHeaders();
 
-        // token value is assigned during setUp method
-        headers.add("Authorization", "Bearer " + ownerToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        // checks that coach can't delete client account.
+        testUtil.coachAndClientShouldNotDeleteClientAccount(
+                new DeleteAccountDto(client1.getAccount().getEmail(), client1.getAccount().getPhoneNumber()),
+                coachToken);
 
-        DeleteAccountDto deleteAccountDto = new DeleteAccountDto(null, "1");
-        HttpEntity request = new HttpEntity<>(deleteAccountDto,headers);
-        HttpStatusCode responseStatusCode = restTemplate.exchange(baseUrl + "/client-account-manager",
-                HttpMethod.DELETE, request, void.class).getStatusCode();
-
-        assertThat(responseStatusCode).isNotNull().isEqualTo(HttpStatus.OK);
-    }
-
-    // utility method to encapsulate the login logic.
-    String login(String username, String password, String url){
-
-        // Create the basic auth request to the api/login/owner endpoint.
-        String plainCredentials  = username + ":" + password;
-        byte[] plainCredentialsBytes = plainCredentials.getBytes();
-
-        // Encode the basic authentication request.
-        byte[] base64CredentialsBytes = Base64.encodeBase64(plainCredentialsBytes);
-        String base64Credentials= new String(base64CredentialsBytes);
-
-        // Create the header object
-        HttpHeaders basicAuthHeaders = new HttpHeaders();
-        basicAuthHeaders.add("Authorization", "Basic " + base64Credentials);
-
-        // Perform login to get the token.
-        HttpEntity<String> basicAuthRequest = new HttpEntity<String>(basicAuthHeaders);
-        String  token = restTemplate.postForObject(url, basicAuthRequest
-                ,String.class);
-
-        return token;
-    }
-
-    // utility method to get the base url
-    String getBaseUrl(){
-        String baseUrl = "http://localhost:" + port + "/api";
-        return baseUrl;
+        // checks that client can't delete client account.
+        testUtil.coachAndClientShouldNotDeleteClientAccount(
+                new DeleteAccountDto(client1.getAccount().getEmail(), client1.getAccount().getPhoneNumber()),
+                clientToken);
 
     }
+    @Test
+    void shouldNotDeleteClientAccountWithoutAccessToken(){
+        /*
+        * It checks that you can't delete client account without access token.
+        * It checks that the response status code is 401 (UNAUTHORIZED).
+        * Here I have used client1 as it's already saved to the database in the setUp method.
+        * */
 
+        ResponseEntity<String> response = testUtil.attemptDeleteClientAccount(
+                new DeleteAccountDto(client1.getAccount().getEmail(), client1.getAccount().getPhoneNumber()), null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
 }

@@ -68,6 +68,13 @@ public class Client {
             this.birthDate = birthDate;
             return this;
         }
+        public Builder copyFrom(Client client){
+            Account.Builder accountBuilder = new Account.Builder();
+            this.account = accountBuilder.copyFrom(account).build();
+            this.id = client.id;
+            this.birthDate = client.birthDate;
+            return this;
+        }
         public Client build(){
             Client client =  new Client();
             client.id = this.id;
