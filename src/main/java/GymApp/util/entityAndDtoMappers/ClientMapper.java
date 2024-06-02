@@ -2,6 +2,8 @@ package GymApp.util.entityAndDtoMappers;
 
 import GymApp.dto.AccountProfileDto;
 import GymApp.dto.ClientAccountProfileDto;
+import GymApp.dto.CreateAccountDto;
+import GymApp.dto.CreateClientAccountDto;
 import GymApp.entity.Account;
 import GymApp.entity.Client;
 
@@ -17,5 +19,11 @@ public class ClientMapper {
 
         return new ClientAccountProfileDto(accountProfileDto,
                 client.getBirthDate());
+    }
+
+    // Client ==> CreateClientAccountDto
+    public static CreateClientAccountDto clientEntityToCreateClientAccountDto(Client client){
+        CreateAccountDto createAccountDto = AccountMapper.accountEntityToCreateAccountDto(client.getAccount());
+        return new CreateClientAccountDto(createAccountDto, client.getBirthDate());
     }
 }

@@ -71,6 +71,7 @@ public class ClientAccountManagerController {
     // get client profile
     @GetMapping("/client-account-manager")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_CLIENT')")
     public ClientAccountProfileDto getMyProfile(Authentication authentication) throws Exception {
         // we depend on account_id as an identifier
         long identifier = Long.parseLong(authentication.getName());
@@ -100,6 +101,7 @@ public class ClientAccountManagerController {
     // update my profile
     @PutMapping("/client-account-manager")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_CLIENT')")
     ClientAccountProfileDto updateMyProfile(@RequestBody @Valid ClientAccountProfileDto clientAccountProfileDto,
                                       Authentication authentication) throws Exception {
         AccountProfileDto accountProfileDto = util.updateMyProfile(clientAccountProfileDto.accountProfileDto()
@@ -119,6 +121,7 @@ public class ClientAccountManagerController {
     // change password
     @PutMapping("/client-account-manager/password")
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_CLIENT')")
     void changePassword(@RequestBody @Valid ChangePasswordDto changePasswordDto, Authentication authentication){
         util.changePassword(changePasswordDto, authentication);
     }
