@@ -18,16 +18,16 @@ It's the backend of GYM management app.
   * `POST http://localhost:8080/api/owner-account-manager`
 
 * Owner can get his account details through
-  * `GET http://localhost:8080/api/owner-account-manager`    
+  * `GET http://localhost:8080/api/owner-account-manager`
 
 * Owner can list all owner accounts through
-  * `GET http://localhost:8080/api/owner-account-manager/all`    
+  * `GET http://localhost:8080/api/owner-account-manager/all`
 
 * Owner can update his account through
-  * `PUT http://localhost:8080/api/owner-account-manager`    
+  * `PUT http://localhost:8080/api/owner-account-manager`
 
 * Owner can change his account password through
-  * `PUT "http://localhost:8080/api/owner-account-manager/password`    
+  * `PUT "http://localhost:8080/api/owner-account-manager/password`
 
 * Owner can Delete his own account through
   * `DELETE http://localhost:8080/api/owner-account-manager`
@@ -35,19 +35,19 @@ It's the backend of GYM management app.
 
 ### Coach Account Manager
 * **Owner** can create coach account through
-  * `POST http://localhost:8080/api/coach-account-manager`    
+  * `POST http://localhost:8080/api/coach-account-manager`
 
 * **Coach** can get his account details through
-  * `GET  http://localhost:8080/api/coach-account-manager`    
+  * `GET  http://localhost:8080/api/coach-account-manager`
 
 * **Owner** can get list of all coaches through
-  * `GET http://localhost:8080/api/coach-account-manager/coaches`    
+  * `GET http://localhost:8080/api/coach-account-manager/coaches`
 
 * **Coach** can update his own profile through
-  * `PUT http://localhost:8080/api/coach-account-manager`    
+  * `PUT http://localhost:8080/api/coach-account-manager`
 
 * **Coach** can change his account password through
-  * `PUT http://localhost:8080/api/coach-account-manager/password`    
+  * `PUT http://localhost:8080/api/coach-account-manager/password`
 
 * **Owner** can delete coach account through
   * `DELETE http://localhost:8080/api/coach-account-manager`
@@ -55,16 +55,16 @@ It's the backend of GYM management app.
 
 ### Client Account Manager
 * **Owner** can create new client account through
-  * `POST http://localhost:8080/api/client-account-manager`    
+  * `POST http://localhost:8080/api/client-account-manager`
 
 * **Client** can get his account details through
-  * `GET http://localhost:8080/api/client-account-manager`    
+  * `GET http://localhost:8080/api/client-account-manager`
     
 * **Owner / Coach** can get list of all clients through
-  * `GET http://localhost:8080/api/client-account-manager/clients`    
+  * `GET http://localhost:8080/api/client-account-manager/clients`
     
 * **Client** can update his account details through
-  * `PUT http://localhost:8080/api/client-account-manager`    
+  * `PUT http://localhost:8080/api/client-account-manager`
     
 * **Client** can change his password through
   * `PUT http://localhost:8080/api/client-account-manager/password`
@@ -75,7 +75,7 @@ It's the backend of GYM management app.
 ### Workout Controller
 Owner, coach, and client can CRUD their own workouts.
 * Create workout through
-  * `POST http://localhost:8080/api/workouts`    
+  * `POST http://localhost:8080/api/workouts`
     
 * Get all his workouts through
   * `GET http://localhost:8080/api/workouts`
