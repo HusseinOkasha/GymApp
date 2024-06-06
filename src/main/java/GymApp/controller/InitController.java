@@ -28,7 +28,7 @@ public class InitController {
         this.ownerService = ownerService;
     }
 
-    @PostMapping("/api/init")
+    @PostMapping("/init")
     public AccountProfileDto init(){
         /*
         * It creates an owner account for demo purposes.
