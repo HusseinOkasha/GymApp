@@ -115,7 +115,8 @@ public class SecurityConfig {
         http
                 .csrf((a)->a.disable())
                 .authorizeHttpRequests((authz) -> authz
-                        .requestMatchers(HttpMethod.POST, "/api/accounts").permitAll()
+                        // this endpoint creates an owner account for demo purposes.
+                        .requestMatchers(HttpMethod.POST, "/api/init").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer((oauth2)-> oauth2.jwt(withDefaults()))
