@@ -2,10 +2,9 @@
 It's the backend of GYM management app.
 
 ## How to run
-* `git clone https://github.com/HusseinOkasha/GymAppDockerization.git`
-  * This repo contains the necessary docker files to build an image from the project.
-* `cd GymAppDockerization`
-* `docker compose up`
+* `git clone https://github.com/HusseinOkasha/GymApp.git`
+* `cd GymApp`
+* `docker-compose -f docker-compose-prod.yml up`
   * Running this command will clone the GymApp repo from gitHub.
   * It will create 2 containers one for the GymApp and the other for postgreSQL.
   * The Gym app will be running on port 8080.
