@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "myuser", "-d", "mydatabase"]
+      interval: 10s  # Check every 10 seconds
+      timeout: 60s     # Timeout after 5 seconds if unhealthy
+      retries: 5     #
+    environment:
+      - 'POSTGRES_DB=mydatabase'
+      - 'POSTGRES_PASSWORD=secret'
+      - 'POSTGRES_USER=myuser'
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gym-app-network
+
+  gym-app:
+    build:
+      context: .
+      dockerfile: Dockerfile-prod
+    ports: 
+      - "8080:8080"
+    networks:
+      - "gym-app-network"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydatabase
+      SPRING_DATASOURCE_USERNAME: myuser
+      SPRING_DATASOURCE_PASSWORD: secret
+  
+networks:
+  gym-app-network:
+    driver: bridge
+
+volumes:
+  postgres_data: 
+

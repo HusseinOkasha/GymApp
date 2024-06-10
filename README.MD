@@ -2,15 +2,16 @@
 It's the backend of GYM management app.
 
 ## How to run
-* `git clone https://github.com/HusseinOkasha/GymAppDockerization.git`
-  * This repo contains the necessary docker files to build an image from the project.
-* `cd GymAppDockerization`
-* `docker compose up`
+* `git clone https://github.com/HusseinOkasha/GymApp.git`
+* `cd GymApp`
+* `docker-compose -f docker-compose-prod.yml up`
   * Running this command will clone the GymApp repo from gitHub.
   * It will create 2 containers one for the GymApp and the other for postgreSQL.
   * The Gym app will be running on port 8080.
 * Send post request to the init controller, which will create owner account, so you can try different features.
   * `curl -X POST http://localhost:8080/api/init`
+## User Guide
+It contains curl commands trying different features in the project [User Guide](https://thin-move-11a.notion.site/User-Guide-6338255eefbc4362b5c952132c801622#c58b835e7c9d457db8a09a47e562e404)
 
 ### Tests
 * `git clone https://github.com/HusseinOkasha/GymApp.git`
