@@ -1,10 +1,9 @@
 package GymApp.security;
 
 
+import GymApp.security.authenticationProvider.ClientAuthenticationProviderService;
 import GymApp.security.authenticationProvider.CoachAuthenticationProviderService;
 import GymApp.security.authenticationProvider.OwnerAuthenticationProviderService;
-import GymApp.security.authenticationProvider.ClientAuthenticationProviderService;
-
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -21,13 +20,17 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -46,7 +49,8 @@ public class SecurityConfig {
     @Autowired
     private final ClientAuthenticationProviderService clientAuthenticationProviderService;
 
-    public SecurityConfig(RsaKeyProperties rsaKeys, OwnerAuthenticationProviderService ownerAuthenticationProviderService,
+    public SecurityConfig(RsaKeyProperties rsaKeys,
+                          OwnerAuthenticationProviderService ownerAuthenticationProviderService,
                           CoachAuthenticationProviderService coachAuthenticationProviderService,
                           ClientAuthenticationProviderService clientAuthenticationProviderService) {
         this.rsaKeys = rsaKeys;
@@ -55,15 +59,18 @@ public class SecurityConfig {
         this.clientAuthenticationProviderService = clientAuthenticationProviderService;
     }
 
-
     @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder(){
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
-    };
+    }
+
+    ;
+
     @Bean
     public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withPublicKey(rsaKeys.publicKey()).build();
     }
+
     @Bean
     JwtEncoder jwtEncoder() {
         JWK jwk = new RSAKey.Builder(rsaKeys.publicKey()).privateKey(rsaKeys.privateKey()).build();
@@ -76,10 +83,10 @@ public class SecurityConfig {
     SecurityFilterChain ownerLoginFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/login/owner")
-                .csrf((a)->a.disable())
+                .csrf((a) -> a.disable())
                 .authenticationProvider(ownerAuthenticationProviderService)
+                .cors(withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .httpBasic(withDefaults());
         return http.build();
     }
@@ -90,38 +97,53 @@ public class SecurityConfig {
     SecurityFilterChain coachLoginFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/login/coach")
-                .csrf((a)->a.disable())
+                .csrf((a) -> a.disable())
+                .cors(withDefaults())
                 .authenticationProvider(coachAuthenticationProviderService)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .httpBasic(withDefaults());
         return http.build();
     }
+
     @Order(Ordered.HIGHEST_PRECEDENCE)
     @Bean
     SecurityFilterChain clientLoginFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/login/client")
-                .csrf((a)->a.disable())
+                .csrf((a) -> a.disable())
+                .cors(withDefaults())
                 .authenticationProvider(clientAuthenticationProviderService)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(withDefaults());
         return http.build();
     }
 
-
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf((a)->a.disable())
+                .csrf((a) -> a.disable())
+                .cors(withDefaults())
                 .authorizeHttpRequests((authz) -> authz
                         // this endpoint creates an owner account for demo purposes.
                         .requestMatchers(HttpMethod.POST, "/api/init").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer((oauth2)-> oauth2.jwt(withDefaults()))
+                .oauth2ResourceServer((oauth2) -> oauth2.jwt(withDefaults()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        final CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedMethods(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type", "Access-Control-Allowed" +
+                "-Origin", "Accept"));
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
 }
