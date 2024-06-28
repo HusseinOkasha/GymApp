@@ -1,6 +1,7 @@
 package GymApp.controller;
 
 
+import GymApp.dto.TokenDto;
 import GymApp.enums.AccountType;
 import GymApp.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,17 +22,17 @@ public class LoginController {
     }
 
     @PostMapping("/owner")
-    public String ownerLogin(Authentication authentication) {
-        return tokenService.generateToken(authentication.getName(), AccountType.OWNER);
+    public TokenDto ownerLogin(Authentication authentication) {
+        return new TokenDto(tokenService.generateToken(authentication.getName(), AccountType.OWNER));
     }
 
     @PostMapping("/client")
-    public String clientLogin(Authentication authentication) {
-        return tokenService.generateToken(authentication.getName(), AccountType.CLIENT);
+    public TokenDto clientLogin(Authentication authentication) {
+        return new TokenDto(tokenService.generateToken(authentication.getName(), AccountType.CLIENT));
     }
 
     @PostMapping("/coach")
-    public String coachLogin(Authentication authentication) {
-        return tokenService.generateToken(authentication.getName(), AccountType.COACH);
+    public TokenDto coachLogin(Authentication authentication) {
+        return new TokenDto(tokenService.generateToken(authentication.getName(), AccountType.COACH));
     }
 }
