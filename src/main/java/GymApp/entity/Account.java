@@ -1,6 +1,8 @@
 package GymApp.entity;
 
+import GymApp.enums.UserRoles;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -34,9 +36,21 @@ public class Account {
     @OneToMany(mappedBy = "account", cascade = CascadeType.REMOVE)
     private Set<AccountWorkout> accountWorkouts = new HashSet<>();
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_role",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles;
+
+
     public Account() {
     }
 
+    public Set<Role> getRoles() {
+        return roles;
+    }
     public long getId() {
         return id;
     }
@@ -126,6 +140,7 @@ public class Account {
         private String email;
         private String phoneNumber;
         private String password;
+        private UserRoles role;
         private Set<AccountWorkout> accountWorkouts;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
@@ -161,6 +176,10 @@ public class Account {
             this.password = password;
             return this;
         }
+        public Builder role(UserRoles role){
+            this.role = role;
+            return this;
+        }
         public Builder accountWorkouts(Set<AccountWorkout> accountWorkouts ){
             this.accountWorkouts = new HashSet<>(accountWorkouts);
             return this;
@@ -194,6 +213,7 @@ public class Account {
             account.email = this.email;
             account.phoneNumber = this.phoneNumber;
             account.password = this.password;
+
             account.accountWorkouts = this.accountWorkouts;
             account.createdAt = this.createdAt;
             account.updatedAt = this.updatedAt;

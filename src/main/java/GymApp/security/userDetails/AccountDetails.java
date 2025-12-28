@@ -1,34 +1,36 @@
 package GymApp.security.userDetails;
 
-import GymApp.entity.Coach;
-import GymApp.enums.AccountType;
+import GymApp.entity.Account;
+import GymApp.enums.UserRoles;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
-public class CoachDetails implements CustomUserDetails {
-    private final Coach coach;
+public class AccountDetails implements CustomUserDetails {
+
+    private final Account account;
 
     @Autowired
-    public CoachDetails(Coach coach) {
-        this.coach = coach;
+    public AccountDetails(Account account) {
+        this.account = account;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        return account.getRoles().stream().map(role-> new SimpleGrantedAuthority(role.getAuthority())).toList();
     }
 
     @Override
     public String getPassword() {
-        return coach.getAccount().getPassword();
+        return account.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return coach.getAccount().getEmail();
+        return account.getEmail();
     }
 
     @Override
@@ -51,11 +53,12 @@ public class CoachDetails implements CustomUserDetails {
         return false;
     }
 
-    @Override
-    public AccountType getAccountType(String accountType) {
-        return AccountType.COACH;
-    }
     public long getAccountId(){
-        return coach.getAccount().getId();
+        return account.getId();
+    }
+
+    @Override
+    public UserRoles getAccountType(String accountType) {
+        return null;
     }
 }

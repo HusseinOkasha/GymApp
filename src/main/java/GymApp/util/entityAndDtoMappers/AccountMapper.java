@@ -1,10 +1,8 @@
 package GymApp.util.entityAndDtoMappers;
 
 import GymApp.dto.AccountProfileDto;
-import GymApp.dto.ClientAccountProfileDto;
 import GymApp.dto.CreateAccountDto;
 import GymApp.entity.Account;
-import GymApp.entity.Client;
 
 public class AccountMapper {
     // Account ==> AccountProfileDto

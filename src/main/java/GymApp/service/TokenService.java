@@ -1,17 +1,14 @@
 package GymApp.service;
 
 import GymApp.entity.Account;
-import GymApp.enums.AccountType;
-import org.springframework.security.core.Authentication;
+import GymApp.enums.UserRoles;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
-import org.springframework.security.core.GrantedAuthority;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class TokenService {
@@ -25,7 +22,7 @@ public class TokenService {
         this.accountService = accountService;
     }
 
-    public String generateToken(String identifier, AccountType accountType) {
+    public String generateToken(String identifier, UserRoles accountType) {
         Instant now = Instant.now();
         String scope = accountType.toString();
         JwtClaimsSet claims = JwtClaimsSet.builder()

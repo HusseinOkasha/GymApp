@@ -2,7 +2,7 @@ package GymApp.controller;
 
 
 import GymApp.dto.TokenDto;
-import GymApp.enums.AccountType;
+import GymApp.enums.UserRoles;
 import GymApp.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -21,18 +21,9 @@ public class LoginController {
         this.tokenService = tokenService;
     }
 
-    @PostMapping("/owner")
-    public TokenDto ownerLogin(Authentication authentication) {
-        return new TokenDto(tokenService.generateToken(authentication.getName(), AccountType.OWNER));
+    @PostMapping()
+    public TokenDto login(Authentication authentication) {
+        return new TokenDto(tokenService.generateToken(authentication.getName(), UserRoles.ADMIN));
     }
 
-    @PostMapping("/client")
-    public TokenDto clientLogin(Authentication authentication) {
-        return new TokenDto(tokenService.generateToken(authentication.getName(), AccountType.CLIENT));
-    }
-
-    @PostMapping("/coach")
-    public TokenDto coachLogin(Authentication authentication) {
-        return new TokenDto(tokenService.generateToken(authentication.getName(), AccountType.COACH));
-    }
 }

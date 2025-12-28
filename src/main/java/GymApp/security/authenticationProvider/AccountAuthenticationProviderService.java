@@ -1,9 +1,8 @@
 package GymApp.security.authenticationProvider;
 
 
-import GymApp.security.userDetails.ClientDetails;
-import GymApp.security.userDetailsService.JpaClientDetailsService;
-
+import GymApp.security.userDetails.AccountDetails;
+import GymApp.security.userDetailsService.JpaAccountDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -16,15 +15,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
 @Service
-public class ClientAuthenticationProviderService implements AuthenticationProvider {
+public class AccountAuthenticationProviderService  implements AuthenticationProvider {
     @Lazy
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
-    private JpaClientDetailsService clientDetailsService;
+    private JpaAccountDetailsService accountDetailsService;
 
 
     @Override
@@ -32,15 +30,17 @@ public class ClientAuthenticationProviderService implements AuthenticationProvid
         String emailOrPhoneNumber = authentication.getName();
         String password = authentication.getCredentials().toString();
 
-        ClientDetails clientDetails =  clientDetailsService.loadUserByUsername(emailOrPhoneNumber);
+        AccountDetails accountDetails =  accountDetailsService.loadUserByUsername(emailOrPhoneNumber);
 
-        return checkPassword(clientDetails, password, bCryptPasswordEncoder);
+        return checkPassword(accountDetails, password, bCryptPasswordEncoder);
+
+
     }
-    private Authentication checkPassword(ClientDetails clientDetails, String rawPassword, PasswordEncoder encoder) {
+    private Authentication checkPassword(AccountDetails accountDetails, String rawPassword, PasswordEncoder encoder) {
 
-        if(encoder.matches(rawPassword, clientDetails.getPassword())){
-            return new UsernamePasswordAuthenticationToken(clientDetails.getAccountId(), clientDetails.getPassword(),
-                    clientDetails.getAuthorities());
+        if(encoder.matches(rawPassword, accountDetails.getPassword())){
+            return new UsernamePasswordAuthenticationToken(accountDetails.getAccountId(), accountDetails.getPassword(),
+                    accountDetails.getAuthorities());
         }
         else{
             throw new BadCredentialsException("Bad Credentials");

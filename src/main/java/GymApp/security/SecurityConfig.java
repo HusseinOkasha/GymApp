@@ -1,9 +1,7 @@
 package GymApp.security;
 
 
-import GymApp.security.authenticationProvider.ClientAuthenticationProviderService;
-import GymApp.security.authenticationProvider.CoachAuthenticationProviderService;
-import GymApp.security.authenticationProvider.OwnerAuthenticationProviderService;
+import GymApp.security.authenticationProvider.AccountAuthenticationProviderService;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -42,21 +40,12 @@ public class SecurityConfig {
     private final RsaKeyProperties rsaKeys;
 
     @Autowired
-    private final OwnerAuthenticationProviderService ownerAuthenticationProviderService;
-
-    @Autowired
-    private final CoachAuthenticationProviderService coachAuthenticationProviderService;
-    @Autowired
-    private final ClientAuthenticationProviderService clientAuthenticationProviderService;
+    private final AccountAuthenticationProviderService accountAuthenticationProviderService;
 
     public SecurityConfig(RsaKeyProperties rsaKeys,
-                          OwnerAuthenticationProviderService ownerAuthenticationProviderService,
-                          CoachAuthenticationProviderService coachAuthenticationProviderService,
-                          ClientAuthenticationProviderService clientAuthenticationProviderService) {
+                          AccountAuthenticationProviderService accountAuthenticationProviderService) {
         this.rsaKeys = rsaKeys;
-        this.ownerAuthenticationProviderService = ownerAuthenticationProviderService;
-        this.coachAuthenticationProviderService = coachAuthenticationProviderService;
-        this.clientAuthenticationProviderService = clientAuthenticationProviderService;
+        this.accountAuthenticationProviderService = accountAuthenticationProviderService;
     }
 
     @Bean
@@ -82,37 +71,10 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain ownerLoginFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/login/owner")
+                .securityMatcher("/api/login")
                 .csrf((a) -> a.disable())
-                .authenticationProvider(ownerAuthenticationProviderService)
+                .authenticationProvider(accountAuthenticationProviderService)
                 .cors(withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .httpBasic(withDefaults());
-        return http.build();
-    }
-
-
-    @Order(Ordered.HIGHEST_PRECEDENCE)
-    @Bean
-    SecurityFilterChain coachLoginFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher("/api/login/coach")
-                .csrf((a) -> a.disable())
-                .cors(withDefaults())
-                .authenticationProvider(coachAuthenticationProviderService)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .httpBasic(withDefaults());
-        return http.build();
-    }
-
-    @Order(Ordered.HIGHEST_PRECEDENCE)
-    @Bean
-    SecurityFilterChain clientLoginFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher("/api/login/client")
-                .csrf((a) -> a.disable())
-                .cors(withDefaults())
-                .authenticationProvider(clientAuthenticationProviderService)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(withDefaults());
         return http.build();
