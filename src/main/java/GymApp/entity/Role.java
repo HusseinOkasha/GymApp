@@ -1,5 +1,7 @@
 package GymApp.entity;
 
+import GymApp.enums.Roles;
+
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -10,17 +12,20 @@ public class Role implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private long id;
+    @Enumerated(EnumType.STRING)
     @Column(name="name", nullable = false)
-    private String name;
+    private Roles name;
     public Role(){
 
     }
-    public Role(String name){
+    public Role(Roles name){
         this.name = name;
     }
-
+    public Long getId(){
+        return this.id;
+    }
     @Override
     public String getAuthority() {
-        return name;
+        return name.toString();
     }
 }

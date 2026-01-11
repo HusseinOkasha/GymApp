@@ -5,15 +5,18 @@ import GymApp.dao.RoleRepository;
 import GymApp.dto.AccountProfileDto;
 import GymApp.entity.Account;
 import GymApp.entity.Role;
-import GymApp.enums.UserRoles;
+import GymApp.entity.UserRole;
+import GymApp.enums.Roles;
 import GymApp.service.AccountService;
 import GymApp.util.entityAndDtoMappers.AccountMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api")
@@ -21,7 +24,8 @@ public class InitController {
     /*
     * It is intended to be used to initialize the DB, by adding an owner account.
     * I have added this controller to be easy for others to run and test the project.
-    * Instead of writing SQL queries directly to the database, you just send a request to this controller,
+    * Instead of writing SQL queries directly to the database, you just send a request to this
+    * controller,
       and it will handle the creation of owner account, so you can use the application.
     * */
     @Autowired
@@ -29,16 +33,25 @@ public class InitController {
 
     @Autowired
     private final RoleRepository roleRepository;
+
     public InitController(AccountService accountService, RoleRepository roleRepository) {
         this.accountService = accountService;
         this.roleRepository = roleRepository;
     }
 
     @PostMapping("/init")
-    public AccountProfileDto init(){
+    public AccountProfileDto init() {
         /*
-        * It creates an owner account for demo purposes.
-        * */
+         * It creates an owner account for demo purposes.
+         * */
+
+        List<Role> roles = List.of(
+                new Role(Roles.ADMIN),
+                new Role(Roles.CLIENT),
+                new Role(Roles.EMPLOYEE)
+        );
+
+        this.roleRepository.saveAll(roles);
 
         Account.Builder accountBuilder = new Account.Builder();
 
@@ -48,24 +61,15 @@ public class InitController {
         // save the account_id in the owner table
 
         Account account = accountBuilder
-                        .firstName("f1")
-                        .secondName("s1")
-                        .thirdName("t1")
-                        .email("e1@gmail.com")
-                        .phoneNumber("1")
-                        .password(bCryptPassword)
-                        .role(UserRoles.ADMIN)
-                        .build();
-
+                .firstName("f1")
+                .secondName("s1")
+                .thirdName("t1")
+                .email("e1@gmail.com")
+                .phoneNumber("1")
+                .password(bCryptPassword).build();
+        UserRole userRoleLink = new UserRole(account, roleRepository.findRoleByName(Roles.ADMIN));
+        account.setRoles(Set.of(userRoleLink));
         account = accountService.save(account);
-
-        List<Role> roles = List.of(
-            new Role(UserRoles.ADMIN.toString()),
-            new Role(UserRoles.CLIENT.toString()),
-            new Role(UserRoles.EMPLOYEE.toString())
-        );
-
-        this.roleRepository.saveAll(roles);
 
         // return the account profile dto (without password).
         return AccountMapper.accountEntityToAccountProfileDto(account);

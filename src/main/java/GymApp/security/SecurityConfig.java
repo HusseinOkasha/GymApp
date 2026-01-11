@@ -14,6 +14,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -42,8 +44,10 @@ public class SecurityConfig {
     @Autowired
     private final AccountAuthenticationProviderService accountAuthenticationProviderService;
 
-    public SecurityConfig(RsaKeyProperties rsaKeys,
-                          AccountAuthenticationProviderService accountAuthenticationProviderService) {
+    public SecurityConfig(
+            RsaKeyProperties rsaKeys,
+            AccountAuthenticationProviderService accountAuthenticationProviderService
+    ) {
         this.rsaKeys = rsaKeys;
         this.accountAuthenticationProviderService = accountAuthenticationProviderService;
     }
@@ -53,7 +57,10 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    ;
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception{
+        return config.getAuthenticationManager();
+    }
 
     @Bean
     public JwtDecoder jwtDecoder() {
@@ -67,45 +74,44 @@ public class SecurityConfig {
         return new NimbusJwtEncoder(jwks);
     }
 
-    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Bean
-    SecurityFilterChain ownerLoginFilterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    SecurityFilterChain publicChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/login")
-                .csrf((a) -> a.disable())
-                .authenticationProvider(accountAuthenticationProviderService)
-                .cors(withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .httpBasic(withDefaults());
+                .securityMatcher("/api/login", "/api/init")
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
         return http.build();
     }
-
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Order(2)
+    SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
         http
-                .csrf((a) -> a.disable())
-                .cors(withDefaults())
-                .authorizeHttpRequests((authz) -> authz
-                        // this endpoint creates an owner account for demo purposes.
-                        .requestMatchers(HttpMethod.POST, "/api/init").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .oauth2ResourceServer((oauth2) -> oauth2.jwt(withDefaults()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                .securityMatcher("/api/**")
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
         return http.build();
     }
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173"));
         config.setAllowedMethods(List.of("*"));
         config.setAllowCredentials(true);
-        config.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type", "Access-Control-Allowed" +
-                "-Origin", "Accept"));
+        config.setAllowedHeaders(List.of(
+                "Authorization",
+                "Cache-Control",
+                "Content-Type",
+                "Access-Control-Allowed" + "-Origin",
+                "Accept"
+        ));
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }
-
 }

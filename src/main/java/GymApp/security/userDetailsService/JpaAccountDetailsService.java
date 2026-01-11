@@ -1,9 +1,8 @@
 package GymApp.security.userDetailsService;
 
 import GymApp.entity.Account;
-import GymApp.security.userDetails.AccountDetails;
+import GymApp.security.userDetails.CustomUserDetails;
 import GymApp.service.AccountService;
-import GymApp.service.AccountServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -17,11 +16,11 @@ public class JpaAccountDetailsService implements UserDetailsService {
     private AccountService accountService;
 
     @Override
-    public AccountDetails loadUserByUsername(String username) {
+    public CustomUserDetails loadUserByUsername(String username) {
         Supplier<UsernameNotFoundException> s =
                 () -> new UsernameNotFoundException("Problem during authentication!");
         Account account = accountService.findByEmailOrPhoneNumber(username, username).orElseThrow(s);
-        return new AccountDetails(account);
+        return new CustomUserDetails(account);
 
     }
 }

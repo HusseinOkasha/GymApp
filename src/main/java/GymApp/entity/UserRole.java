@@ -2,6 +2,8 @@ package GymApp.entity;
 
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -27,6 +29,19 @@ public class UserRole {
             this.accountId = accountId;
         }
 
+        public void setAccountId(Long accountId){
+            this.accountId = accountId;
+        }
+
+        public void setRoleId(Long roleId){
+            this.roleId = roleId;
+        }
+        public Long getAccountId(){
+            return this.accountId;
+        }
+        public Long getRoleId(){
+            return this.roleId;
+        }
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -45,10 +60,12 @@ public class UserRole {
 
     @ManyToOne(fetch = FetchType.LAZY )
     @JoinColumn(name = "role_id", insertable = false, updatable = false)
+    @MapsId("roleId")
     private Role role;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", insertable = false, updatable = false)
+    @MapsId("accountId")
     private Account account;
 
 
@@ -59,6 +76,11 @@ public class UserRole {
     private LocalDateTime updatedAt;
 
     public UserRole() {}
+    public UserRole(Account account, Role role) {
+        this.account = account;
+        this.role = role;
+        this.id = new UserRole.Id(account.getId(), role.getId());
+    }
 
     public UserRole.Id getId() {
         return id;

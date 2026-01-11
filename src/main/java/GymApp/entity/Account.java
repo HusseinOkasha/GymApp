@@ -1,6 +1,6 @@
 package GymApp.entity;
 
-import GymApp.enums.UserRoles;
+
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -36,20 +36,17 @@ public class Account {
     @OneToMany(mappedBy = "account", cascade = CascadeType.REMOVE)
     private Set<AccountWorkout> accountWorkouts = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_role",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles;
-
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserRole> roles = new HashSet<>();
 
     public Account() {
     }
 
-    public Set<Role> getRoles() {
+    public Set<UserRole> getRoles() {
         return roles;
+    }
+    public void setRoles(Set<UserRole> roles){
+        this.roles = roles;
     }
     public long getId() {
         return id;
@@ -140,7 +137,7 @@ public class Account {
         private String email;
         private String phoneNumber;
         private String password;
-        private UserRoles role;
+        private Set<UserRole> roles;
         private Set<AccountWorkout> accountWorkouts;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
@@ -176,8 +173,8 @@ public class Account {
             this.password = password;
             return this;
         }
-        public Builder role(UserRoles role){
-            this.role = role;
+        public Builder role(Set<UserRole> roles){
+            this.roles = roles;
             return this;
         }
         public Builder accountWorkouts(Set<AccountWorkout> accountWorkouts ){
@@ -213,7 +210,7 @@ public class Account {
             account.email = this.email;
             account.phoneNumber = this.phoneNumber;
             account.password = this.password;
-
+            account.roles = this.roles;
             account.accountWorkouts = this.accountWorkouts;
             account.createdAt = this.createdAt;
             account.updatedAt = this.updatedAt;

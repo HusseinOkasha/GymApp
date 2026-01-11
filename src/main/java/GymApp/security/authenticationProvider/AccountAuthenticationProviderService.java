@@ -1,7 +1,7 @@
 package GymApp.security.authenticationProvider;
 
 
-import GymApp.security.userDetails.AccountDetails;
+import GymApp.security.userDetails.CustomUserDetails;
 import GymApp.security.userDetailsService.JpaAccountDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -30,16 +30,16 @@ public class AccountAuthenticationProviderService  implements AuthenticationProv
         String emailOrPhoneNumber = authentication.getName();
         String password = authentication.getCredentials().toString();
 
-        AccountDetails accountDetails =  accountDetailsService.loadUserByUsername(emailOrPhoneNumber);
+        CustomUserDetails userDetails =  accountDetailsService.loadUserByUsername(emailOrPhoneNumber);
 
-        return checkPassword(accountDetails, password, bCryptPasswordEncoder);
+        return checkPassword(userDetails, password, bCryptPasswordEncoder);
 
 
     }
-    private Authentication checkPassword(AccountDetails accountDetails, String rawPassword, PasswordEncoder encoder) {
+    private Authentication checkPassword(CustomUserDetails accountDetails, String rawPassword, PasswordEncoder encoder) {
 
         if(encoder.matches(rawPassword, accountDetails.getPassword())){
-            return new UsernamePasswordAuthenticationToken(accountDetails.getAccountId(), accountDetails.getPassword(),
+            return new UsernamePasswordAuthenticationToken(accountDetails, accountDetails.getPassword(),
                     accountDetails.getAuthorities());
         }
         else{

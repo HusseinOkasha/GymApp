@@ -1,5 +1,6 @@
 package GymApp.enums;
 
-public enum UserRoles {
+public enum Roles {
     ADMIN, EMPLOYEE, CLIENT
 }
+
