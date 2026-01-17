@@ -24,7 +24,7 @@ public class CustomUserDetails implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return account.getRoles()
                    .stream()
-                   .map(userRole -> new SimpleGrantedAuthority("ROLE_" + userRole.getRole().getAuthority()))
+                   .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getAuthority()))
                    .toList();
     }
 
