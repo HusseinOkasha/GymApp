@@ -67,7 +67,7 @@ public class InitController {
                 .email("e1@gmail.com")
                 .phoneNumber("1")
                 .password(bCryptPassword).build();
-        UserRole userRoleLink = new UserRole(account, roleRepository.findRoleByName(Roles.ADMIN));
+        UserRole userRoleLink = new UserRole(account, roleRepository.findRoleByName(Roles.ADMIN).orElseThrow());
         account.setRoles(Set.of(userRoleLink));
         account = accountService.save(account);
 
