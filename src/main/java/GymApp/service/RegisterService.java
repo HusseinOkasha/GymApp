@@ -4,7 +4,7 @@ import GymApp.dao.RoleRepository;
 import GymApp.dto.RegisterDto;
 import GymApp.entity.Account;
 import GymApp.entity.UserRole;
-import GymApp.exception.BadRequestException;
+import GymApp.exception.AccountAlreadyExistsException;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -33,7 +33,7 @@ public class RegisterService {
         // Check the existence of the user in the system and throw exception if it already exists
         // in the database
         accountService.findByEmail(account.getEmail()).ifPresent((acc) -> {
-            throw new BadRequestException("User with this email already exists");
+            throw new AccountAlreadyExistsException("User with this email already exists");
         });
 
         // Assign role to the account.
@@ -41,8 +41,8 @@ public class RegisterService {
                 account,
                 roleRepository
                         .findRoleByName(dto.role())
-                        .orElseThrow(() -> new BadRequestException("Can't find role: " +
-                                                                   dto.role()))
+                        .orElseThrow(() -> new AccountAlreadyExistsException("Can't find role: " +
+                                                                             dto.role()))
         );
         account.setRoles(Set.of(userRole));
 
