@@ -78,7 +78,7 @@ public class SecurityConfig {
     @Order(1)
     SecurityFilterChain publicChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/login", "/api/init")
+                .securityMatcher("/api/auth/login", "/api/init")
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
