@@ -2,17 +2,21 @@ package GymApp.controller;
 
 
 import GymApp.dto.LoginDto;
+import GymApp.dto.RegisterDto;
 import GymApp.dto.SetPasswordDto;
 import GymApp.dto.TokenDto;
+import GymApp.entity.Account;
 import GymApp.security.userDetails.CustomUserDetails;
 import GymApp.service.AccountService;
 import GymApp.service.AuthService;
+import GymApp.service.RegisterService;
 import GymApp.service.TokenService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,17 +29,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AuthService authService;
+    private final RegisterService registerService;
     private final TokenService tokenService;
     private final AuthenticationManager authenticationManager;
 
     public AuthController(
             BCryptPasswordEncoder bCryptPasswordEncoder,
-            AuthService authService,
+            AuthService authService, RegisterService registerService,
             TokenService tokenService,
             AuthenticationManager authenticationManager
     ) {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.authService = authService;
+        this.registerService = registerService;
         this.tokenService = tokenService;
         this.authenticationManager = authenticationManager;
     }
@@ -51,6 +57,27 @@ public class AuthController {
                 account.getUsername(),
                 account.getAuthorities()
         ));
+    }
+
+    @PostMapping("/register")
+    @Validated
+    public ResponseEntity register(@Valid @RequestBody RegisterDto dto) {
+        // Create account
+        Account dbAccount = registerService.register(dto);
+
+        // Generate token to be embedded in the invitation link as a path variable
+        String token = tokenService.generateToken(
+                dbAccount.getEmail(),
+                dbAccount
+                        .getRoles()
+                        .stream()
+                        .map((userRole) -> new SimpleGrantedAuthority(userRole
+                                                                              .getRole()
+                                                                              .getAuthority()))
+                        .toList()
+        );
+        return ResponseEntity.ok(token);
+
     }
 
     @PostMapping("/set-password")
