@@ -7,9 +7,7 @@ import GymApp.dto.SetPasswordDto;
 import GymApp.dto.TokenDto;
 import GymApp.entity.Account;
 import GymApp.security.userDetails.CustomUserDetails;
-import GymApp.service.AccountService;
 import GymApp.service.AuthService;
-import GymApp.service.RegisterService;
 import GymApp.service.TokenService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -29,19 +27,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AuthService authService;
-    private final RegisterService registerService;
     private final TokenService tokenService;
     private final AuthenticationManager authenticationManager;
 
     public AuthController(
             BCryptPasswordEncoder bCryptPasswordEncoder,
-            AuthService authService, RegisterService registerService,
+            AuthService authService,
             TokenService tokenService,
             AuthenticationManager authenticationManager
     ) {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.authService = authService;
-        this.registerService = registerService;
         this.tokenService = tokenService;
         this.authenticationManager = authenticationManager;
     }
@@ -63,7 +59,7 @@ public class AuthController {
     @Validated
     public ResponseEntity register(@Valid @RequestBody RegisterDto dto) {
         // Create account
-        Account dbAccount = registerService.register(dto);
+        Account dbAccount = authService.register(dto);
 
         // Generate token to be embedded in the invitation link as a path variable
         String token = tokenService.generateToken(
