@@ -2,6 +2,7 @@ package GymApp.service;
 
 import GymApp.dao.AccountRepository;
 import GymApp.entity.Account;
+import GymApp.exception.AccountNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +24,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Optional<Account> findById(long id) {
-        return accountRepository.findById(id);
+    public Account findById(long id) {
+        return accountRepository
+                .findById(id)
+                .orElseThrow(() -> new AccountNotFoundException("Couldn't find Account with Id: " +
+                                                                id));
     }
 
     @Override
