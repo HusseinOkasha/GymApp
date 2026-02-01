@@ -5,6 +5,7 @@ import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.service.MembershipService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,6 +28,7 @@ public class MembershipController {
 
     @PostMapping
     @Validated
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_EMPLOYEE')")
     public ResponseEntity<CreateMembershipResponse> createMembership(
             @Valid @RequestBody CreateMembershipRequest req
     ) {
