@@ -36,7 +36,7 @@ public class Membership {
 
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
-    private Account account;
+    private Account client;
 
 
     public Membership() {
@@ -82,12 +82,12 @@ public class Membership {
         this.type = type;
     }
 
-    public Account getAccount() {
-        return account;
+    public Account getClient() {
+        return client;
     }
 
-    public void setAccount(Account account) {
-        this.account = account;
+    public void setClient(Account client) {
+        this.client = client;
     }
 
     @Override
@@ -101,12 +101,12 @@ public class Membership {
                Objects.equals(getStartDate(), that.getStartDate()) &&
                Objects.equals(getEndDate(), that.getEndDate()) &&
                getType() == that.getType() &&
-               Objects.equals(getAccount(), that.getAccount());
+               Objects.equals(getClient(), that.getClient());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getAccount().getId());
+        return Objects.hash(getId(), getClient().getId());
     }
 
     @Override

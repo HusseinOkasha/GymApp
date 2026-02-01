@@ -32,8 +32,8 @@ public class MembershipServiceImpl implements MembershipService {
         membership.setType(dto.type());
 
         // Get the Account
-        Account account = accountService.findById(dto.accountId());
-        membership.setAccount(account);
+        Account account = accountService.findById(dto.clientId());
+        membership.setClient(account);
 
         // Persist membership to the database.
         Membership createdMembership = membershipRepository.save(membership);
@@ -45,7 +45,7 @@ public class MembershipServiceImpl implements MembershipService {
                 createdMembership.getEndDate(),
                 createdMembership.isActive(),
                 createdMembership.getType(),
-                createdMembership.getAccount().getId()
+                createdMembership.getClient().getId()
         );
     }
 

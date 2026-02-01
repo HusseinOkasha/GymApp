@@ -8,6 +8,6 @@ import java.time.LocalDate;
 
 public record CreateMembershipRequest(
         @NotNull LocalDate startDate, @NotNull LocalDate endDate, @NotNull Boolean isActive,
-        @NotNull MembershipType type, @NotNull Long accountId
+        @NotNull MembershipType type, @NotNull Long clientId
 ) {
 }
