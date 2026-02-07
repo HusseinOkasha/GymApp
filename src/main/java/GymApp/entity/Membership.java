@@ -42,6 +42,22 @@ public class Membership {
     public Membership() {
     }
 
+    public Membership(
+            Long id,
+            LocalDate startDate,
+            LocalDate endDate,
+            boolean isActive,
+            MembershipType type,
+            Account client
+    ) {
+        this.id = id;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.isActive = isActive;
+        this.type = type;
+        this.client = client;
+    }
+
     public Long getId() {
         return id;
     }
