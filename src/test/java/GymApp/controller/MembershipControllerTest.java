@@ -83,7 +83,8 @@ public class MembershipControllerTest {
                 LocalDate.of(2027, 1, 1),
                 true,
                 MembershipType.YEAR,
-                (long) 1
+                (long) 1,
+                1L
         );
 
         // Prepare response body
@@ -93,7 +94,8 @@ public class MembershipControllerTest {
                 LocalDate.of(2027, 1, 1),
                 true,
                 MembershipType.YEAR,
-                (long) 1
+                (long) 1,
+                1L
         );
 
         // Mock membership service
@@ -111,7 +113,8 @@ public class MembershipControllerTest {
                                                         "endDate": "2027-01-01",
                                                         "isActive": true,
                                                         "type":"YEAR",
-                                                        "clientId":"1"
+                                                        "clientId":"1",
+                                                        "branchId":"1"
                                                       }
                                                   """))
                 .andExpect(status().isCreated());
@@ -132,7 +135,8 @@ public class MembershipControllerTest {
                 LocalDate.of(2027, 1, 1),
                 true,
                 MembershipType.YEAR,
-                (long) 1
+                (long) 1,
+                1L
         );
 
         // Prepare response body
@@ -142,7 +146,8 @@ public class MembershipControllerTest {
                 LocalDate.of(2027, 1, 1),
                 true,
                 MembershipType.YEAR,
-                (long) 1
+                (long) 1,
+                1L
         );
 
         // Mock membership service
@@ -160,7 +165,8 @@ public class MembershipControllerTest {
                                                         "endDate": "2027-01-01",
                                                         "isActive": true,
                                                         "type":"YEAR",
-                                                        "clientId":"1"
+                                                        "clientId":"1",
+                                                        "branchId":"1"
                                                       }
                                                   """))
                 .andExpect(status().isForbidden());

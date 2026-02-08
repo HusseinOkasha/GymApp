@@ -4,6 +4,7 @@ import GymApp.dao.MembershipRepository;
 import GymApp.dto.membership.CreateMembershipRequest;
 import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.entity.Account;
+import GymApp.entity.Branch;
 import GymApp.entity.Membership;
 import GymApp.enums.MembershipType;
 import GymApp.exception.AccountNotFoundException;
@@ -30,6 +31,10 @@ public class MembershipServiceTest {
 
     @Mock
     AccountService accountService;
+    @Mock
+    BranchService branchService;
+
+
     @InjectMocks
     MembershipServiceImpl service;
 
@@ -44,7 +49,8 @@ public class MembershipServiceTest {
                 LocalDate.of(2027, 1, 1),
                 true,
                 MembershipType.YEAR,
-                (long) 1
+                (long) 1,
+                1L
         );
         // Prepare the ( CreateMembershipResponse Object )
         CreateMembershipResponse ExpectedResponse = new CreateMembershipResponse(
@@ -53,19 +59,23 @@ public class MembershipServiceTest {
                 LocalDate.of(2027, 1, 1),
                 true,
                 MembershipType.YEAR,
-                (long) 1
+                (long) 1,
+                1L
         );
 
         // Prepare the ( Membership Object )
         Account client = new Account();
+        Branch branch = new Branch();
         client.setId(1);
+        branch.setId(1);
         Membership membership = new Membership(
                 null,
                 LocalDate.of(2026, 1, 1),
                 LocalDate.of(2027, 1, 1),
                 true,
                 MembershipType.YEAR,
-                client
+                client,
+                branch
         );
 
         // Mock the ( Membership Repository )
@@ -75,12 +85,16 @@ public class MembershipServiceTest {
                 LocalDate.of(2027, 1, 1),
                 true,
                 MembershipType.YEAR,
-                client
+                client,
+                branch
 
         ));
 
         // Mock the ( AccountService )
         when(accountService.findById(1)).thenReturn(client);
+        // Mock the ( BranchService )
+        when(branchService.findBranchById(any())).thenReturn(branch);
+
 
         // Act
         CreateMembershipResponse response = service.createMembership(request);
@@ -97,19 +111,23 @@ public class MembershipServiceTest {
                 LocalDate.of(2027, 1, 1),
                 true,
                 MembershipType.YEAR,
-                (long) 1
+                (long) 1,
+                1L
         );
 
         // Prepare the ( Membership Object )
         Account client = new Account();
         client.setId(1);
+        Branch branch = new Branch();
+        branch.setId(1);
         Membership membership = new Membership(
                 null,
                 LocalDate.of(2026, 1, 1),
                 LocalDate.of(2027, 1, 1),
                 true,
                 MembershipType.YEAR,
-                client
+                client,
+                branch
         );
 
         // Mock the ( AccountService )

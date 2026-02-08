@@ -52,7 +52,8 @@ public class Membership {
             LocalDate endDate,
             boolean isActive,
             MembershipType type,
-            Account client
+            Account client,
+            Branch branch
     ) {
         this.id = id;
         this.startDate = startDate;
@@ -60,6 +61,7 @@ public class Membership {
         this.isActive = isActive;
         this.type = type;
         this.client = client;
+        this.branch = branch;
     }
 
     public Long getId() {
