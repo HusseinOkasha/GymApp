@@ -4,6 +4,7 @@ import GymApp.dao.MembershipRepository;
 import GymApp.dto.membership.CreateMembershipRequest;
 import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.entity.Account;
+import GymApp.entity.Branch;
 import GymApp.entity.Membership;
 import org.springframework.stereotype.Service;
 
@@ -12,13 +13,15 @@ public class MembershipServiceImpl implements MembershipService {
 
     private final MembershipRepository membershipRepository;
     private final AccountService accountService;
+    private final BranchService branchService;
 
     public MembershipServiceImpl(
             MembershipRepository membershipRepository,
-            AccountService accountService
+            AccountService accountService, BranchService branchService
     ) {
         this.membershipRepository = membershipRepository;
         this.accountService = accountService;
+        this.branchService = branchService;
     }
 
     @Override
@@ -31,9 +34,16 @@ public class MembershipServiceImpl implements MembershipService {
         membership.setActive(dto.isActive());
         membership.setType(dto.type());
 
+
         // Get the Account
         Account account = accountService.findById(dto.clientId());
+        // Set client for membership.
         membership.setClient(account);
+
+        // Get the branch
+        Branch branch = branchService.findBranchById(dto.branchId());
+        // Set branch for membership
+        membership.setBranch(branch);
 
         // Persist membership to the database.
         Membership createdMembership = membershipRepository.save(membership);
@@ -45,7 +55,8 @@ public class MembershipServiceImpl implements MembershipService {
                 createdMembership.getEndDate(),
                 createdMembership.isActive(),
                 createdMembership.getType(),
-                createdMembership.getClient().getId()
+                createdMembership.getClient().getId(),
+                createdMembership.getBranch().getId()
         );
     }
 

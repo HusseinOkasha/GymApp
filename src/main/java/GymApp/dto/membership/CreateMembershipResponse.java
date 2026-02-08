@@ -6,6 +6,6 @@ import java.time.LocalDate;
 
 public record CreateMembershipResponse(
         Long id, LocalDate startDate, LocalDate endDate, Boolean isActive, MembershipType type,
-        Long clientId
+        Long clientId, Long branchId
 ) {
 }

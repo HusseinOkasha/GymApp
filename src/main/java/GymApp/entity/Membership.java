@@ -38,6 +38,10 @@ public class Membership {
     @JoinColumn(name = "account_id", nullable = false)
     private Account client;
 
+    @ManyToOne
+    @JoinColumn(name="branch_id", nullable = false)
+    private Branch branch;
+
 
     public Membership() {
     }
@@ -104,6 +108,14 @@ public class Membership {
 
     public void setClient(Account client) {
         this.client = client;
+    }
+
+    public Branch getBranch() {
+        return branch;
+    }
+
+    public void setBranch(Branch branch) {
+        this.branch = branch;
     }
 
     @Override
