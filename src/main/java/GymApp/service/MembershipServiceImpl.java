@@ -6,6 +6,10 @@ import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.entity.Account;
 import GymApp.entity.Branch;
 import GymApp.entity.Membership;
+import GymApp.security.userDetails.CustomUserDetails;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,14 +17,16 @@ public class MembershipServiceImpl implements MembershipService {
 
     private final MembershipRepository membershipRepository;
     private final AccountService accountService;
+    private final CurrentUserService currentUserService;
     private final BranchService branchService;
 
     public MembershipServiceImpl(
             MembershipRepository membershipRepository,
-            AccountService accountService, BranchService branchService
+            AccountService accountService, CurrentUserService currentUserService, BranchService branchService
     ) {
         this.membershipRepository = membershipRepository;
         this.accountService = accountService;
+        this.currentUserService = currentUserService;
         this.branchService = branchService;
     }
 
@@ -35,14 +41,16 @@ public class MembershipServiceImpl implements MembershipService {
         membership.setType(dto.type());
 
 
-        // Get the Account
-        Account account = accountService.findById(dto.clientId());
         // Set client for membership.
+        Account account = accountService.findById(dto.clientId());
         membership.setClient(account);
 
-        // Get the branch
-        Branch branch = branchService.findBranchById(dto.branchId());
+        // Set Creator for the membership.
+        Account creator = currentUserService.getCurrentUser();
+        membership.setCreatedBy(creator);
+
         // Set branch for membership
+        Branch branch = branchService.findBranchById(dto.branchId());
         membership.setBranch(branch);
 
         // Persist membership to the database.
@@ -56,7 +64,8 @@ public class MembershipServiceImpl implements MembershipService {
                 createdMembership.isActive(),
                 createdMembership.getType(),
                 createdMembership.getClient().getId(),
-                createdMembership.getBranch().getId()
+                createdMembership.getBranch().getId(),
+                createdMembership.getCreatedBy().getId()
         );
     }
 

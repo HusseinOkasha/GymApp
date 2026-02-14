@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface  AccountService {
       List<Account> findAll();
       Account findById(long id);
-      Optional<Account>findByEmail(String email);
+      Account findByEmail(String email);
       Optional<Account>findByPhoneNumber(String phoneNumber);
       Optional<Account>findByEmailOrPhoneNumber(String email, String phoneNumber);
       Account save(Account account);

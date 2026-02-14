@@ -10,8 +10,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -35,13 +37,20 @@ public class Membership {
     private MembershipType type;
 
     @ManyToOne
-    @JoinColumn(name = "account_id", nullable = false)
+    @JoinColumn(name = "client_id", nullable = false)
     private Account client;
 
     @ManyToOne
     @JoinColumn(name="branch_id", nullable = false)
     private Branch branch;
 
+    @JoinColumn(name="created_by", nullable = false)
+    @ManyToOne
+    private Account createdBy;
+
+    @CreationTimestamp
+    @Column(name="created_at", nullable = false)
+    private LocalDateTime createdAt;
 
     public Membership() {
     }
@@ -53,7 +62,8 @@ public class Membership {
             boolean isActive,
             MembershipType type,
             Account client,
-            Branch branch
+            Branch branch,
+            Account createdBy
     ) {
         this.id = id;
         this.startDate = startDate;
@@ -120,6 +130,22 @@ public class Membership {
         this.branch = branch;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Account getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Account createdBy) {
+        this.createdBy = createdBy;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -131,12 +157,25 @@ public class Membership {
                Objects.equals(getStartDate(), that.getStartDate()) &&
                Objects.equals(getEndDate(), that.getEndDate()) &&
                getType() == that.getType() &&
-               Objects.equals(getClient(), that.getClient());
+               Objects.equals(getClient(), that.getClient()) &&
+               Objects.equals(getBranch(), that.getBranch()) &&
+               Objects.equals(getCreatedBy(), that.getCreatedBy()) &&
+               Objects.equals(getCreatedAt(), that.getCreatedAt());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getClient().getId());
+        return Objects.hash(
+                getId(),
+                getStartDate(),
+                getEndDate(),
+                isActive(),
+                getType(),
+                getClient(),
+                getBranch(),
+                getCreatedBy(),
+                getCreatedAt()
+        );
     }
 
     @Override
@@ -152,7 +191,14 @@ public class Membership {
                isActive +
                ", type=" +
                type +
+               ", client=" +
+               client +
+               ", branch=" +
+               branch +
+               ", created_by=" +
+               createdBy +
+               ", createdAt=" +
+               createdAt +
                '}';
     }
-
 }

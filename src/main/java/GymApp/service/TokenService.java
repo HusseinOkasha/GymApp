@@ -41,13 +41,6 @@ public class TokenService {
         return this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 
-    public Optional<Account> getAccount(String authorizationHeader) {
-        Jwt decodedToken = getToken(authorizationHeader);
-        String userEmail = decodedToken.getClaim("sub");
-        Optional<Account> account = accountService.findByEmail(userEmail);
-        return account;
-    }
-
     public Jwt getToken(String authorizationHeader) {
         String encodedToken = extractToken(authorizationHeader);
         Jwt decodedToken = decodeToken(encodedToken);

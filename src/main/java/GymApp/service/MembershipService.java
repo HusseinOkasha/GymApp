@@ -6,7 +6,7 @@ import GymApp.entity.Membership;
 
 public interface MembershipService {
     CreateMembershipResponse createMembership(CreateMembershipRequest dto);
-//    void updateMembership(MembershipDto dto);
+//    UpdateMembershipResponse updateMembership(UpdateMembershipRequest dto);
     void getMembershipById(Long membershipId);
     void getMembershipByAccountId(Long AccountId);
     void deleteMembershipById(Long membershipId);
