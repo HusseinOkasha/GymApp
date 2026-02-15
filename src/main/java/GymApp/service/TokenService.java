@@ -9,6 +9,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -24,21 +26,27 @@ public class TokenService {
         this.accountService = accountService;
     }
 
-    public String generateToken(String identifier,  Collection<? extends GrantedAuthority>  authorities) {
+    public String generateToken(
+            String identifier,
+            Collection<? extends GrantedAuthority> authorities,
+            Map<String, Object> claims
+    ) {
+
         Instant now = Instant.now();
         String scope = String.join(
                 ",",
                 authorities.stream().map(GrantedAuthority::getAuthority).toList()
         );
-        JwtClaimsSet claims = JwtClaimsSet
+        JwtClaimsSet claimsSet = JwtClaimsSet
                 .builder()
                 .issuer("self")
                 .issuedAt(now)
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .subject(identifier)
                 .claim("scope", scope)
+                .claims((map)-> map.putAll(claims))
                 .build();
-        return this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        return this.encoder.encode(JwtEncoderParameters.from(claimsSet)).getTokenValue();
     }
 
     public Jwt getToken(String authorizationHeader) {

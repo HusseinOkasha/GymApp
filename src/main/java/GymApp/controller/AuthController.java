@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -51,7 +53,8 @@ public class AuthController {
         CustomUserDetails account = (CustomUserDetails) authentication.getPrincipal();
         return new TokenDto(tokenService.generateToken(
                 account.getUsername(),
-                account.getAuthorities()
+                account.getAuthorities(),
+                Map.of("branchId", account.getAccount().getBranch().getId())
         ));
     }
 
@@ -70,7 +73,8 @@ public class AuthController {
                         .map((userRole) -> new SimpleGrantedAuthority(userRole
                                                                               .getRole()
                                                                               .getAuthority()))
-                        .toList()
+                        .toList(),
+                Map.of("branchId", dto.branchId())
         );
         return ResponseEntity.ok(token);
 

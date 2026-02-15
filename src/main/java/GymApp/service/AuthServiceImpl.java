@@ -4,6 +4,7 @@ import GymApp.dao.AccountRepository;
 import GymApp.dao.RoleRepository;
 import GymApp.dto.RegisterDto;
 import GymApp.entity.Account;
+import GymApp.entity.Branch;
 import GymApp.entity.UserRole;
 import GymApp.exception.AccountAlreadyExistsException;
 import GymApp.exception.AccountNotFoundException;
@@ -20,17 +21,19 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
     private final CurrentUserService currentUserService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final BranchService branchService;
 
     public AuthServiceImpl(
             AccountRepository accountRepository,
             RoleRepository roleRepository,
             CurrentUserService currentUserService,
-            BCryptPasswordEncoder bCryptPasswordEncoder
+            BCryptPasswordEncoder bCryptPasswordEncoder, BranchService branchService
     ) {
         this.accountRepository = accountRepository;
         this.roleRepository = roleRepository;
         this.currentUserService = currentUserService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.branchService = branchService;
     }
 
     @Override
@@ -58,6 +61,10 @@ public class AuthServiceImpl implements AuthService {
         accountRepository.findByEmail(account.getEmail()).ifPresent((acc) -> {
             throw new AccountAlreadyExistsException("User with this email already exists");
         });
+
+        // Assign Branch to the account
+        Branch branch = branchService.findBranchById(dto.branchId());
+        account.setBranch(branch);
 
         // Assign role to the account.
         UserRole userRole = new UserRole(

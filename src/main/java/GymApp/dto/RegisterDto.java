@@ -18,6 +18,8 @@ public record RegisterDto(
         @NotBlank(message = "Phone Number shouldn't be empty")
         String phoneNumber,
         @NotNull(message = "Role shouldn't be empty")
-        Roles role
+        Roles role,
+        @NotNull(message= "Branch Id can't be null")
+        Long branchId
 ) {
 }
