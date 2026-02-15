@@ -72,6 +72,7 @@ public class Membership {
         this.type = type;
         this.client = client;
         this.branch = branch;
+        this.createdBy = createdBy;
     }
 
     public Long getId() {
