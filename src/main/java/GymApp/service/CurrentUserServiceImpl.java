@@ -2,7 +2,7 @@ package GymApp.service;
 
 import GymApp.dao.AccountRepository;
 import GymApp.entity.Account;
-import GymApp.exception.AccountNotFoundException;
+import GymApp.exception.NotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ public class CurrentUserServiceImpl implements CurrentUserService {
 
         return accountRepository
                 .findByEmail(email)
-                .orElseThrow(() -> new AccountNotFoundException("Can't find account with email: " +
-                                                                email));
+                .orElseThrow(() -> new NotFoundException("Can't find account with email: " +
+                                                         email));
     }
 }

@@ -4,7 +4,6 @@ import GymApp.dao.AccountRepository;
 import GymApp.dao.UserBranchRepository;
 import GymApp.entity.Account;
 import GymApp.entity.UserBranch;
-import GymApp.exception.AccountNotFoundException;
 import GymApp.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,7 +34,7 @@ public class AccountServiceImpl implements AccountService {
     public Account findById(long id) {
         return accountRepository
                 .findById(id)
-                .orElseThrow(() -> new AccountNotFoundException("Couldn't find Account with Id: " +
+                .orElseThrow(() -> new NotFoundException("Couldn't find Account with Id: " +
                                                                 id));
     }
 
@@ -43,7 +42,7 @@ public class AccountServiceImpl implements AccountService {
     public Account findByEmail(String email) {
         return accountRepository
                 .findByEmail(email)
-                .orElseThrow(() -> new AccountNotFoundException("Couldn't find Account with " +
+                .orElseThrow(() -> new NotFoundException("Couldn't find Account with " +
                                                                 "email: " +
                                                                 email));
     }

@@ -26,36 +26,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    @ExceptionHandler(AccountNotFoundException.class)
-    public ResponseEntity<ApiError> handleAccountNotFound(
-            AccountNotFoundException ex,
-            HttpServletRequest request
-    ) {
-        ApiError error = new ApiError(
-                ex.getMessage(),
-                "ACCOUNT_NOT_FOUND",
-                HttpStatus.BAD_REQUEST.value(),
-                request.getRequestURI(),
-                Instant.now()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(BranchNotFoundException.class)
-    public ResponseEntity<ApiError> handleAccountNotFound(
-            BranchNotFoundException ex,
-            HttpServletRequest request
-    ) {
-        ApiError error = new ApiError(
-                ex.getMessage(),
-                "BRANCH_NOT_FOUND",
-                HttpStatus.BAD_REQUEST.value(),
-                request.getRequestURI(),
-                Instant.now()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(
             NotFoundException ex,

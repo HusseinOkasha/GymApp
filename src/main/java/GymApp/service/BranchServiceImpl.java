@@ -2,7 +2,7 @@ package GymApp.service;
 
 import GymApp.dao.BranchRepository;
 import GymApp.entity.Branch;
-import GymApp.exception.BranchNotFoundException;
+import GymApp.exception.NotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,8 +19,8 @@ public class BranchServiceImpl implements BranchService {
     public Branch findBranchById(Long branchId) {
         return branchRepository
                 .findById(branchId)
-                .orElseThrow(() -> new BranchNotFoundException("Couldn't find branch with id: " +
-                                                               branchId));
+                .orElseThrow(() -> new NotFoundException("Couldn't find branch with id: " +
+                                                         branchId));
     }
 
     @Override

@@ -8,10 +8,6 @@ import GymApp.entity.Branch;
 import GymApp.entity.UserBranch;
 import GymApp.entity.UserRole;
 import GymApp.exception.AccountAlreadyExistsException;
-import GymApp.exception.AccountNotFoundException;
-import org.apache.catalina.User;
-import org.apache.coyote.BadRequestException;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
