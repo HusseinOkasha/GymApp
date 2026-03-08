@@ -5,6 +5,8 @@ import GymApp.entity.Branch;
 import GymApp.exception.BranchNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class BranchServiceImpl implements BranchService {
     private final BranchRepository branchRepository;
@@ -19,5 +21,10 @@ public class BranchServiceImpl implements BranchService {
                 .findById(branchId)
                 .orElseThrow(() -> new BranchNotFoundException("Couldn't find branch with id: " +
                                                                branchId));
+    }
+
+    @Override
+    public List<Branch> findAllByIds(List<Long> branches) {
+        return branchRepository.findAllById(branches);
     }
 }

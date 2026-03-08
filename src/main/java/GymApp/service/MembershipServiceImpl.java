@@ -6,10 +6,6 @@ import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.entity.Account;
 import GymApp.entity.Branch;
 import GymApp.entity.Membership;
-import GymApp.security.userDetails.CustomUserDetails;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,7 +18,9 @@ public class MembershipServiceImpl implements MembershipService {
 
     public MembershipServiceImpl(
             MembershipRepository membershipRepository,
-            AccountService accountService, CurrentUserService currentUserService, BranchService branchService
+            AccountService accountService,
+            CurrentUserService currentUserService,
+            BranchService branchService
     ) {
         this.membershipRepository = membershipRepository;
         this.accountService = accountService;
@@ -32,6 +30,11 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public CreateMembershipResponse createMembership(CreateMembershipRequest dto) {
+        // Check that the current user (EMPLOYEE / Admin) has access on the branch
+        accountService.hasAccessOnBranch(
+                currentUserService.getCurrentUser().getId(),
+                dto.branchId()
+        );
 
         // Map "CreateMembershipRequest" to "Membership" entity.
         Membership membership = new Membership();
@@ -69,10 +72,10 @@ public class MembershipServiceImpl implements MembershipService {
         );
     }
 
-//    @Override
-//    public void updateMembership(MembershipDto dto) {
-//
-//    }
+    //    @Override
+    //    public void updateMembership(MembershipDto dto) {
+    //
+    //    }
 
     @Override
     public void getMembershipById(Long membershipId) {

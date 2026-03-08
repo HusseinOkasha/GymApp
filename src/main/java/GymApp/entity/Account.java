@@ -39,9 +39,8 @@ public class Account {
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserRole> roles = new HashSet<>();
 
-    @ManyToOne
-    @JoinColumn(name = "branch_Id", nullable = false)
-    private Branch branch;
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserBranch> branches = new HashSet<>();
 
     public Account() {
     }
@@ -132,12 +131,12 @@ public class Account {
         this.accountWorkouts = accountWorkouts;
     }
 
-    public Branch getBranch() {
-        return branch;
+    public Set<UserBranch> getBranches() {
+        return this.branches;
     }
 
-    public void setBranch(Branch branch) {
-        this.branch = branch;
+    public void setBranch(Set<UserBranch> branches) {
+        this.branches = branches;
     }
 
     public static class Builder{

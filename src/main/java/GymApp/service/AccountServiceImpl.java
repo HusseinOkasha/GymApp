@@ -1,8 +1,11 @@
 package GymApp.service;
 
 import GymApp.dao.AccountRepository;
+import GymApp.dao.UserBranchRepository;
 import GymApp.entity.Account;
+import GymApp.entity.UserBranch;
 import GymApp.exception.AccountNotFoundException;
+import GymApp.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +16,14 @@ import java.util.Optional;
 public class AccountServiceImpl implements AccountService {
     @Autowired
     private final AccountRepository accountRepository;
+    private final UserBranchRepository userBranchRepository;
 
-    public AccountServiceImpl(AccountRepository accountRepository) {
+    public AccountServiceImpl(
+            AccountRepository accountRepository,
+            UserBranchRepository userBranchRepository
+    ) {
         this.accountRepository = accountRepository;
+        this.userBranchRepository = userBranchRepository;
     }
 
     @Override
@@ -33,8 +41,11 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account findByEmail(String email) {
-        return accountRepository.findByEmail(email).orElseThrow(() -> new AccountNotFoundException("Couldn't find Account with email: " +
-                                                                                                   email));
+        return accountRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new AccountNotFoundException("Couldn't find Account with " +
+                                                                "email: " +
+                                                                email));
     }
 
     @Override
@@ -71,5 +82,16 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void deleteByPhoneNumber(String phoneNumber) {
         accountRepository.deleteByPhoneNumber(phoneNumber);
+    }
+
+    @Override
+    public boolean hasAccessOnBranch(Long accountId, Long branchId) {
+        userBranchRepository
+                .findById(new UserBranch.Id(accountId, branchId))
+                .orElseThrow(() -> new NotFoundException("Account with ID: " +
+                                                         accountId +
+                                                         " Is not assigned to Branch with ID: " +
+                                                         branchId));
+        return true;
     }
 }

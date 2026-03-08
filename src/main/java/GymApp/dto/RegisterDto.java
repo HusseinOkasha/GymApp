@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.List;
+
 public record RegisterDto(
         @NotBlank(message = "FirstName shouldn't be empty")
         String firstName,
@@ -19,7 +21,6 @@ public record RegisterDto(
         String phoneNumber,
         @NotNull(message = "Role shouldn't be empty")
         Roles role,
-        @NotNull(message= "Branch Id can't be null")
-        Long branchId
+        @NotNull(message= "Branches shouldn't be empty") List<Long> branches
 ) {
 }

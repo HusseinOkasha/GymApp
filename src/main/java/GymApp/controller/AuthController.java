@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -54,7 +55,7 @@ public class AuthController {
         return new TokenDto(tokenService.generateToken(
                 account.getUsername(),
                 account.getAuthorities(),
-                Map.of("branchId", account.getAccount().getBranch().getId())
+                Map.of()
         ));
     }
 
@@ -74,7 +75,7 @@ public class AuthController {
                                                                               .getRole()
                                                                               .getAuthority()))
                         .toList(),
-                Map.of("branchId", dto.branchId())
+                Map.of()
         );
         return ResponseEntity.ok(token);
 

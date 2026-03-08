@@ -6,16 +6,27 @@ import GymApp.entity.Account;
 import java.util.List;
 import java.util.Optional;
 
-public interface  AccountService {
-      List<Account> findAll();
-      Account findById(long id);
-      Account findByEmail(String email);
-      Optional<Account>findByPhoneNumber(String phoneNumber);
-      Optional<Account>findByEmailOrPhoneNumber(String email, String phoneNumber);
-      Account save(Account account);
-      void deleteById(long Id);
-      void deleteAll();
-      void deleteByEmail(String email);
-      void deleteByPhoneNumber(String phoneNumber);
+public interface AccountService {
+    List<Account> findAll();
+
+    Account findById(long id);
+
+    Account findByEmail(String email);
+
+    Optional<Account> findByPhoneNumber(String phoneNumber);
+
+    Optional<Account> findByEmailOrPhoneNumber(String email, String phoneNumber);
+
+    Account save(Account account);
+
+    void deleteById(long Id);
+
+    void deleteAll();
+
+    void deleteByEmail(String email);
+
+    void deleteByPhoneNumber(String phoneNumber);
+
+    boolean hasAccessOnBranch(Long accountId, Long branchId);
 
 }

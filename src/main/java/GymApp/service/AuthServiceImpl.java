@@ -5,14 +5,17 @@ import GymApp.dao.RoleRepository;
 import GymApp.dto.RegisterDto;
 import GymApp.entity.Account;
 import GymApp.entity.Branch;
+import GymApp.entity.UserBranch;
 import GymApp.entity.UserRole;
 import GymApp.exception.AccountAlreadyExistsException;
 import GymApp.exception.AccountNotFoundException;
+import org.apache.catalina.User;
 import org.apache.coyote.BadRequestException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -27,7 +30,8 @@ public class AuthServiceImpl implements AuthService {
             AccountRepository accountRepository,
             RoleRepository roleRepository,
             CurrentUserService currentUserService,
-            BCryptPasswordEncoder bCryptPasswordEncoder, BranchService branchService
+            BCryptPasswordEncoder bCryptPasswordEncoder,
+            BranchService branchService
     ) {
         this.accountRepository = accountRepository;
         this.roleRepository = roleRepository;
@@ -62,9 +66,18 @@ public class AuthServiceImpl implements AuthService {
             throw new AccountAlreadyExistsException("User with this email already exists");
         });
 
-        // Assign Branch to the account
-        Branch branch = branchService.findBranchById(dto.branchId());
-        account.setBranch(branch);
+        // Assign Branches to the account
+        List<Branch> branches = branchService.findAllByIds(dto.branches());
+        account
+                .getBranches()
+                .addAll(branches
+                                .stream()
+                                .map(branch -> new UserBranch.Builder()
+                                        .account(account)
+                                        .branch(branch)
+                                        .id(new UserBranch.Id(account.getId(), branch.getId()))
+                                        .build())
+                                .toList());
 
         // Assign role to the account.
         UserRole userRole = new UserRole(
