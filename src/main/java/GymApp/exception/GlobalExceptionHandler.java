@@ -34,10 +34,10 @@ public class GlobalExceptionHandler {
         ApiError error = new ApiError(
                 "NOT_FOUND",
                 ex.getMessage(),
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.NOT_FOUND.value(),
                 request.getRequestURI(),
                 Instant.now()
         );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 }
