@@ -7,7 +7,7 @@ import GymApp.entity.Account;
 import GymApp.entity.Branch;
 import GymApp.entity.Membership;
 import GymApp.enums.MembershipType;
-import GymApp.exception.AccountNotFoundException;
+import GymApp.exception.NotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -105,13 +105,13 @@ public class MembershipServiceTest {
         Membership membership = getSampleMembership(client, nonClientAccount, branch);
 
         // Mock the ( AccountService )
-        when(accountService.findById(client.getId())).thenThrow(new AccountNotFoundException(
+        when(accountService.findById(client.getId())).thenThrow(new NotFoundException(
                 "Account with id 1 not found"));
 
 
         // Act & Assert
-        AccountNotFoundException exception = assertThrows(
-                AccountNotFoundException.class,
+        NotFoundException exception = assertThrows(
+                NotFoundException.class,
                 () -> service.createMembership(request)
         );
 
