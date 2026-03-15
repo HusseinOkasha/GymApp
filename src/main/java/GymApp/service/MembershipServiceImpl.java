@@ -79,6 +79,10 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public GetMembershipsResponse getMemberships(Long branchId, int page, int size, String sort) {
+
+        // Set Default Sort
+        sort = sort==null || sort.isBlank()  ? "startDate" : sort ;
+
         // Get memberships of certain branch
         Page<Membership> membershipsPage = this.membershipRepository.findAllByBranch_Id(
                 branchId,
