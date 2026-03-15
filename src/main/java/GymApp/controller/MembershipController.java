@@ -3,6 +3,8 @@ package GymApp.controller;
 import GymApp.dto.membership.CreateMembershipRequest;
 import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.dto.membership.GetMembershipsResponse;
+import GymApp.service.AccountService;
+import GymApp.service.CurrentUserService;
 import GymApp.service.MembershipService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -25,9 +27,15 @@ import java.net.URI;
 public class MembershipController {
 
     private final MembershipService membershipService;
+    private final AccountService accountService;
+    private final CurrentUserService currentUserService;
 
-    public MembershipController(MembershipService membershipService) {
+    public MembershipController(MembershipService membershipService, AccountService accountService,
+                                CurrentUserService currentUserService
+    ) {
         this.membershipService = membershipService;
+        this.accountService = accountService;
+        this.currentUserService = currentUserService;
     }
 
     @PostMapping
@@ -50,6 +58,8 @@ public class MembershipController {
             @RequestParam(required = false) String sort
 
     ) {
+        // Check that the current user has access on the branch, will throw exception if not.
+        accountService.hasAccessOnBranch(currentUserService.getCurrentUser().getId(), branchId);
         return ResponseEntity.ok(membershipService.getMemberships(branchId, page, size, sort));
     }
 }

@@ -79,9 +79,6 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public GetMembershipsResponse getMemberships(Long branchId, int page, int size, String sort) {
-        // Check that the current user (EMPLOYEE / Admin) has access on the branch
-        accountService.hasAccessOnBranch(currentUserService.getCurrentUser().getId(), branchId);
-
         // Get memberships of certain branch
         Page<Membership> membershipsPage = this.membershipRepository.findAllByBranch_Id(
                 branchId,
