@@ -59,4 +59,23 @@ public class Branch {
     public int hashCode() {
         return Objects.hash(getId(), getName());
     }
+
+    public static class Builder {
+        String name;
+        Long id;
+        public Builder(){}
+
+        public Builder id(Long id){
+            this.id = id;
+            return this;
+        }
+        public Builder name(String name){
+            this.name = name;
+            return this;
+        }
+
+        public Branch build(){
+            return new Branch(id, name);
+        }
+    }
 }

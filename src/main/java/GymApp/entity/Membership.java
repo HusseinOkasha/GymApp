@@ -41,15 +41,15 @@ public class Membership {
     private Account client;
 
     @ManyToOne
-    @JoinColumn(name="branch_id", nullable = false)
+    @JoinColumn(name = "branch_id", nullable = false)
     private Branch branch;
 
-    @JoinColumn(name="created_by", nullable = false)
+    @JoinColumn(name = "created_by", nullable = false)
     @ManyToOne
     private Account createdBy;
 
     @CreationTimestamp
-    @Column(name="created_at", nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     public Membership() {
@@ -63,7 +63,8 @@ public class Membership {
             MembershipType type,
             Account client,
             Branch branch,
-            Account createdBy
+            Account createdBy,
+            LocalDateTime createdAt
     ) {
         this.id = id;
         this.startDate = startDate;
@@ -73,6 +74,7 @@ public class Membership {
         this.client = client;
         this.branch = branch;
         this.createdBy = createdBy;
+        this.createdAt = createdAt;
     }
 
     public Long getId() {
@@ -201,5 +203,80 @@ public class Membership {
                ", createdAt=" +
                createdAt +
                '}';
+    }
+
+    public static class Builder {
+        private Long id;
+        private LocalDate startDate;
+        private LocalDate endDate;
+        private boolean isActive;
+        private MembershipType type;
+        private Account client;
+        private Branch branch;
+        private Account createdBy;
+        private LocalDateTime createdAt;
+
+        public Builder() {
+        }
+
+        public Builder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder startDate(LocalDate startDate) {
+            this.startDate = startDate;
+            return this;
+        }
+
+        public Builder endDate(LocalDate endDate) {
+            this.endDate = endDate;
+            return this;
+        }
+
+        public Builder isActive(boolean isActive) {
+            this.isActive = isActive;
+            return this;
+        }
+
+        public Builder membershipType(MembershipType type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder client(Account client) {
+            this.client = client;
+            return this;
+        }
+
+        public Builder branch(Branch branch) {
+            this.branch = branch;
+            return this;
+        }
+
+        public Builder createdBy(Account createdBy) {
+            this.createdBy = createdBy;
+            return this;
+        }
+
+        public Builder createdAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
+        public Membership build() {
+            return new Membership(
+                    this.id,
+                    this.startDate,
+                    this.endDate,
+                    this.isActive,
+                    this.type,
+                    this.client,
+                    this.branch,
+                    this.createdBy,
+                    this.createdAt
+            );
+        }
+
     }
 }

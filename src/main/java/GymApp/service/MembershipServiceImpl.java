@@ -103,7 +103,7 @@ public class MembershipServiceImpl implements MembershipService {
                         membership.isActive(),
                         membership.getType(),
                         membership.getClient().getId(),
-                        membership.getClient().getId(),
+                        membership.getBranch().getId(),
                         membership.getCreatedBy().getId()
                 )).toList(), membershipsPage.getNumber(), // set the page number
                 membershipsPage.getSize(), // set the page size
