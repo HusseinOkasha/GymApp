@@ -4,6 +4,7 @@ import GymApp.dao.MembershipRepository;
 import GymApp.dto.membership.CreateMembershipRequest;
 import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.dto.membership.GetMembershipsResponse;
+import GymApp.dto.membership.MembershipDto;
 import GymApp.entity.Account;
 import GymApp.entity.Branch;
 import GymApp.entity.Membership;
@@ -13,6 +14,7 @@ import GymApp.service.AccountService;
 import GymApp.service.BranchService;
 import GymApp.service.CurrentUserService;
 import GymApp.service.MembershipServiceImpl;
+import GymApp.util.entityAndDtoMappers.MembershipMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +34,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
@@ -67,26 +70,22 @@ public class MembershipServiceTest {
     public void createMembershipReturns_CreatedMembership() {
 
         // Prepare ( Employee / Admin ) account
-        Account nonClientAccount = getSampleNonClientAccount();
+        Account nonClientAccount = Util.getSampleNonClientAccount();
 
         // Prepare Client Account
-        Account client = getSampleClient();
+        Account client = Util.getSampleClient();
 
         // Prepare Branch object
-        Branch branch = getSampleBranch();
+        Branch branch = Util.getSampleBranch();
 
         // Prepare the ( CreateMembershipRequest Object )
-        CreateMembershipRequest request = getSampleMembershipRequest(client, branch);
+        CreateMembershipRequest request = Util.getSampleMembershipRequest();
 
         // Prepare the ( CreateMembershipResponse Object )
-        CreateMembershipResponse ExpectedResponse = getSampleMembershipResponse(
-                client,
-                branch,
-                nonClientAccount
-        );
+        CreateMembershipResponse ExpectedResponse = Util.getSampleMembershipResponse();
 
         // Prepare the ( Membership Object )
-        Membership membership = getSampleMembership(client, nonClientAccount, branch);
+        Membership membership = Util.getSampleMembership();
 
         // Mock the ( Membership Repository )
         when(membershipRepo.save(any())).thenReturn(membership);
@@ -109,21 +108,24 @@ public class MembershipServiceTest {
     }
 
     @Test
-    public void createMembershipReturns_ThrowsAccountNotFoundException() {
+    public void createMembershipThrows_AccountNotFoundException() {
         // Get Sample Objects
-        Account client = getSampleClient();
-        Account nonClientAccount = getSampleNonClientAccount();
-        Branch branch = getSampleBranch();
+        Account client = Util.getSampleClient();
+        Account nonClientAccount = Util.getSampleNonClientAccount();
+        Branch branch = Util.getSampleBranch();
 
         // Prepare ( CreateMembershipRequest )
-        CreateMembershipRequest request = getSampleMembershipRequest(client, branch);
+        CreateMembershipRequest request = Util.getSampleMembershipRequest();
 
         // Prepare the ( Membership Object )
-        Membership membership = getSampleMembership(client, nonClientAccount, branch);
+        Membership membership = Util.getSampleMembership();
 
         // Mock the ( AccountService )
         when(accountService.findById(client.getId())).thenThrow(new NotFoundException(
                 "Account with id 1 not found"));
+
+        // Mock the ( CurrentUserService )
+        when(currentUserService.getCurrentUser()).thenReturn(new Account.Builder().id(1).build());
 
 
         // Act & Assert
@@ -145,7 +147,7 @@ public class MembershipServiceTest {
     public void getMembershipsReturns_DescendingMemberships() {
         // Prepare
         Pageable pageable = PageRequest.of(0, 10, Sort.by("firstName"));
-        List<Membership> descendingMemberships = getMemberships()
+        List<Membership> descendingMemberships = Util.getMemberships()
                 .stream()
                 .sorted(Comparator.comparing(Membership::getStartDate).reversed())
                 .toList();
@@ -169,7 +171,7 @@ public class MembershipServiceTest {
         GetMembershipsResponse descendingResponse = service.getMemberships(1L, 0, 10, "startDate");
 
         assertThat(new GetMembershipsResponse(
-                descendingMemberships.stream().map(Util::convertMembershipToMembershipDto).toList(),
+                descendingMemberships.stream().map(MembershipMapper::toMembershipDto).toList(),
                 0,
                 10,
                 2L,
@@ -179,7 +181,7 @@ public class MembershipServiceTest {
         GetMembershipsResponse ascendingResponse = service.getMemberships(1L, 0, 10, "startDate");
 
         assertThat(new GetMembershipsResponse(
-                descendingMemberships.stream().map(Util::convertMembershipToMembershipDto).toList(),
+                descendingMemberships.stream().map(MembershipMapper::toMembershipDto).toList(),
                 0,
                 10,
                 2L,
@@ -187,118 +189,34 @@ public class MembershipServiceTest {
         )).usingRecursiveComparison().isEqualTo(ascendingResponse);
     }
 
-    /**
-     * Provides a sample object of type ( CreateMembershipResponse )
-     *
-     */
-    private CreateMembershipResponse getSampleMembershipResponse(
-            Account client,
-            Branch branch,
-            Account nonClientAccount
-    ) {
-        return new CreateMembershipResponse(
-                1L,
-                LocalDate.of(2026, 1, 1),
-                LocalDate.of(2027, 1, 1),
-                true,
-                MembershipType.YEAR,
-                client.getId(),
-                branch.getId(),
-                nonClientAccount.getId()
+    @Test
+    public void getMembershipById_ReturnsCorrectMembership() {
+        // Prepare
+        Membership membership = Util.getSampleMembership();
+        MembershipDto expectedDto = MembershipMapper.toMembershipDto(membership);
 
-        );
-    }
+        // Mock membership repo (findById method)
+        when(membershipRepo.findById(membership.getId())).thenReturn(Optional.of(membership));
 
-    /**
-     * Provides a sample object of type ( CreateMembershipRequest )
-     *
-     */
-    private CreateMembershipRequest getSampleMembershipRequest(Account client, Branch branch) {
-        return new CreateMembershipRequest(
-                LocalDate.of(2026, 1, 1),
-                LocalDate.of(2027, 1, 1),
-                true,
-                MembershipType.YEAR,
-                client.getId(),
-                branch.getId()
-        );
-    }
+        // Act
+        MembershipDto actualDto = service.getMembershipById(membership.getId());
 
-    /**
-     * Provides a sample object of type ( Membership )
-     *
-     */
-    private Membership getSampleMembership(Account client, Account createdBy, Branch branch) {
-        return new Membership(
-                1L,
-                LocalDate.of(2026, 1, 1),
-                LocalDate.of(2027, 1, 1),
-                true,
-                MembershipType.YEAR,
-                client,
-                branch,
-                createdBy,
-                LocalDateTime.now()
-        );
+        // Assert
+        assertThat(actualDto).usingRecursiveComparison().isEqualTo(expectedDto);
 
     }
 
-    /**
-     * Provides a sample object of type ( Account )
-     *
-     */
-    private Account getSampleClient() {
-        Account client = new Account();
-        client.setId(2);
-        return client;
-    }
+    @Test
+    public void getMembershipById_WithNonExistingId_ThrowsNotFoundException() {
+        // Prepare
+        Membership membership = Util.getSampleMembership();
 
-    /**
-     * Provides a sample object of type ( Account )
-     *
-     */
-    private Account getSampleNonClientAccount() {
-        Account account = new Account();
-        account.setId(1);
-        return account;
-    }
+        // Mock membership repo (findById method)
+        when(membershipRepo.findById(membership.getId())).thenThrow(new NotFoundException(
+                "Couldn't find membership with Id: " + membership.getId()));
 
-    /**
-     * Provides a sample object of type ( Branch )
-     *
-     */
-    private Branch getSampleBranch() {
-        Branch branch = new Branch();
-        branch.setId(1);
-        return branch;
-    }
-
-    private List<Membership> getMemberships() {
-        return List.of(
-                new Membership.Builder()
-                        .id(1L)
-                        .startDate(LocalDate.of(2026, 1, 1))
-                        .endDate(LocalDate.of(2027, 1, 1))
-                        .isActive(true)
-                        .membershipType(MembershipType.YEAR)
-                        .createdAt(LocalDateTime.now())
-                        .branch(new Branch.Builder().id(1L).name("branch 1").build())
-                        .createdBy(new Account.Builder().id(1).build())
-                        .client(new Account.Builder().id(2).build())
-                        .build(),
-                new Membership.Builder()
-                        .id(2L)
-                        .startDate(LocalDate.of(2026, 1, 1))
-                        .endDate(LocalDate.of(2027, 1, 1))
-                        .isActive(true)
-                        .membershipType(MembershipType.YEAR)
-                        .createdAt(LocalDateTime.now())
-                        .branch(new Branch.Builder().id(2L).name("branch 2").build())
-                        .createdBy(new Account.Builder().id(1).build())
-                        .client(new Account.Builder().id(3).build())
-                        .build()
-        );
-
+        // Act
+        assertThrows(NotFoundException.class, () -> service.getMembershipById(membership.getId()));
     }
 
 }

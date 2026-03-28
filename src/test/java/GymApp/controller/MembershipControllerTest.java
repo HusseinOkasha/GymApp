@@ -3,7 +3,10 @@ package GymApp.controller;
 import GymApp.dto.membership.CreateMembershipRequest;
 import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.dto.membership.GetMembershipsResponse;
+import GymApp.dto.membership.MembershipDto;
 import GymApp.entity.Account;
+import GymApp.entity.Branch;
+import GymApp.entity.Membership;
 import GymApp.enums.MembershipType;
 import GymApp.exception.NotFoundException;
 import GymApp.security.SecurityConfig;
@@ -12,9 +15,12 @@ import GymApp.service.AccountService;
 import GymApp.service.CurrentUserService;
 import GymApp.service.MembershipService;
 
+import GymApp.service.membership.Util;
+import GymApp.util.entityAndDtoMappers.MembershipMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -31,8 +37,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
+import static GymApp.service.membership.Util.getSampleMembership;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -41,6 +49,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MembershipController.class)
@@ -98,10 +107,10 @@ public class MembershipControllerTest {
     void createMembership_WithValidAuthority_Return201Created(String authority) throws Exception {
 
         // Prepare Request body
-        CreateMembershipRequest request = getSampleMembershipRequest();
+        CreateMembershipRequest request = Util.getSampleMembershipRequest();
 
         // Prepare response body
-        CreateMembershipResponse response = getSampleMembershipResponse();
+        CreateMembershipResponse response = Util.getSampleMembershipResponse();
         // Mock membership service
         when(membershipService.createMembership(any())).thenReturn(response);
 
@@ -125,9 +134,9 @@ public class MembershipControllerTest {
             throws Exception {
 
         // Prepare Request body
-        CreateMembershipRequest request = getSampleMembershipRequest();
+        CreateMembershipRequest request = Util.getSampleMembershipRequest();
         // Prepare response body
-        CreateMembershipResponse response = getSampleMembershipResponse();
+        CreateMembershipResponse response = Util.getSampleMembershipResponse();
 
         // Mock membership service
         when(membershipService.createMembership(any())).thenReturn(response);
@@ -187,7 +196,8 @@ public class MembershipControllerTest {
                     "SCOPE_ADMIN", "SCOPE_EMPLOYEE"
             }
     )
-    void getMemberships_ForUnAccessibleBranch_Returns404NotFound(String authority) throws Exception {
+    void getMemberships_ForUnAccessibleBranch_Returns404NotFound(String authority)
+            throws Exception {
         // Mock membership service ( getMemberships method )
         when(membershipService.getMemberships(
                 any(),
@@ -310,36 +320,88 @@ public class MembershipControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    /**
-     * Provides a sample object of type ( CreateMembershipResponse )
-     *
-     */
-    private CreateMembershipResponse getSampleMembershipResponse() {
-        return new CreateMembershipResponse(
-                1L,
-                LocalDate.of(2026, 1, 1),
-                LocalDate.of(2027, 1, 1),
-                true,
-                MembershipType.YEAR,
-                (long) 1,
-                1L,
-                1L
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                    "SCOPE_ADMIN", "SCOPE_EMPLOYEE"
+            }
+    )
+    void getMembershipById_WithValidAuthority_Returns200OK(String authority) throws Exception {
+        // Prepare
+        Membership membership = getSampleMembership();
+        MembershipDto membershipDto = MembershipMapper.toMembershipDto(membership);
 
-        );
+        // Mock membership service ( getMembershipById method )
+        when(membershipService.getMembershipById(1L)).thenReturn(membershipDto);
+
+        // Mock AccountService ( hasAccessOnBranch method )
+        when(accountService.hasAccessOnBranch(
+                membership.getCreatedBy().getId(),
+                membership.getBranch().getId()
+        )).thenReturn(true);
+
+        // Mock CurrentUserService ( getCurrentUser method )
+        when(currentUserService.getCurrentUser()).thenReturn(membership.getCreatedBy());
+
+
+        // Act & Assert
+        mockMvc
+                .perform(get("/api/membership/" + membership.getId() + "/branch/1")
+                                 .with(csrf())
+                                 .with(jwt().authorities(new SimpleGrantedAuthority(authority))))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(membershipDto)));
     }
 
-    /**
-     * Provides a sample object of type ( CreateMembershipRequest )
-     *
-     */
-    private CreateMembershipRequest getSampleMembershipRequest() {
-        return new CreateMembershipRequest(
-                LocalDate.of(2026, 1, 1),
-                LocalDate.of(2027, 1, 1),
-                true,
-                MembershipType.YEAR,
-                (long) 1,
-                1L
-        );
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                    "SCOPE_CLIENT",
+            }
+    )
+    void getMembershipById_WithInvalidAuthority_Returns403FORBIDDEN(String authority) throws Exception {
+        // Prepare
+        Membership membership = getSampleMembership();
+
+        // Act & Assert
+        mockMvc
+                .perform(get("/api/membership/" + membership.getId() + "/branch/1")
+                                 .with(csrf())
+                                 .with(jwt().authorities(new SimpleGrantedAuthority(authority))))
+                .andExpect(status().isForbidden());
+    }
+
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                    "SCOPE_ADMIN", "SCOPE_EMPLOYEE"
+            }
+    )
+    void getMembershipById_WithValidAuthority_Returns404NOTFOUND(String authority)
+            throws Exception {
+        // Prepare
+        Membership membership = getSampleMembership();
+
+        // Mock membership service ( getMembershipById method )
+        when(membershipService.getMembershipById(1L)).thenThrow(new NotFoundException(
+                "Couldn't find membership with Id: " + membership.getId()));
+
+        // Mock AccountService ( hasAccessOnBranch method )
+        when(accountService.hasAccessOnBranch(
+                membership.getCreatedBy().getId(),
+                membership.getBranch().getId()
+        )).thenReturn(true);
+
+        // Mock CurrentUserService ( getCurrentUser method )
+        when(currentUserService.getCurrentUser()).thenReturn(membership.getCreatedBy());
+
+
+        // Act & Assert
+        mockMvc
+                .perform(get("/api/membership/" + membership.getId() + "/branch/1")
+                                 .with(csrf())
+                                 .with(jwt().authorities(new SimpleGrantedAuthority(authority))))
+                .andExpect(status().isNotFound());
     }
 }

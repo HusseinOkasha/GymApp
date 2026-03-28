@@ -3,6 +3,7 @@ package GymApp.controller;
 import GymApp.dto.membership.CreateMembershipRequest;
 import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.dto.membership.GetMembershipsResponse;
+import GymApp.dto.membership.MembershipDto;
 import GymApp.service.AccountService;
 import GymApp.service.CurrentUserService;
 import GymApp.service.MembershipService;
@@ -62,4 +63,17 @@ public class MembershipController {
         accountService.hasAccessOnBranch(currentUserService.getCurrentUser().getId(), branchId);
         return ResponseEntity.ok(membershipService.getMemberships(branchId, page, size, sort));
     }
+
+    @GetMapping("{membershipId}/branch/{branchId}")
+    @Validated
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_EMPLOYEE')")
+    public ResponseEntity<MembershipDto> getMembershipById(
+            @PathVariable long branchId,
+            @PathVariable long membershipId
+    ) {
+        // Check that the current user has access on the branch, will throw exception if not.
+        accountService.hasAccessOnBranch(currentUserService.getCurrentUser().getId(), branchId);
+        return ResponseEntity.ok(membershipService.getMembershipById(membershipId));
+    }
+
 }

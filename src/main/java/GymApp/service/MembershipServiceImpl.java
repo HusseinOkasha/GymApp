@@ -8,6 +8,8 @@ import GymApp.dto.membership.MembershipDto;
 import GymApp.entity.Account;
 import GymApp.entity.Branch;
 import GymApp.entity.Membership;
+import GymApp.exception.NotFoundException;
+import GymApp.util.entityAndDtoMappers.MembershipMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -81,7 +83,7 @@ public class MembershipServiceImpl implements MembershipService {
     public GetMembershipsResponse getMemberships(Long branchId, int page, int size, String sort) {
 
         // Set Default Sort
-        sort = sort==null || sort.isBlank()  ? "startDate" : sort ;
+        sort = sort == null || sort.isBlank() ? "startDate" : sort;
 
         // Get memberships of certain branch
         Page<Membership> membershipsPage = this.membershipRepository.findAllByBranch_Id(
@@ -114,8 +116,14 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    public void getMembershipById(Long membershipId) {
-
+    public MembershipDto getMembershipById(Long membershipId) {
+        // Get the membership from the database
+        Membership membership = this.membershipRepository
+                .findById(membershipId)
+                .orElseThrow(() -> new NotFoundException("Couldn't find membership with Id: " +
+                                                         membershipId));
+        // Convert ( membership object ) to ( membershipDto )
+        return MembershipMapper.toMembershipDto(membership);
     }
 
     @Override
