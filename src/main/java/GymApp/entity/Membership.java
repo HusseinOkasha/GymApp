@@ -1,6 +1,7 @@
 package GymApp.entity;
 
 import GymApp.enums.MembershipType;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Column;
@@ -20,7 +21,7 @@ import java.util.Objects;
 @Table(name = "memberships")
 public class Membership {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @Column(name = "start_date", nullable = false)

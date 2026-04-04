@@ -13,7 +13,7 @@ import java.util.Set;
 })
 public class Account {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id")
     private long id;
     @Column(name = "first_name", nullable = false)
