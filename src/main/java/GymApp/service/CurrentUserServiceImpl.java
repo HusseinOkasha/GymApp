@@ -3,6 +3,7 @@ package GymApp.service;
 import GymApp.dao.AccountRepository;
 import GymApp.entity.Account;
 import GymApp.exception.NotFoundException;
+import GymApp.service.Intrface.CurrentUserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;

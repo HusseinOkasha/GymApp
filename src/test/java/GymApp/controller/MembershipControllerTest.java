@@ -5,22 +5,19 @@ import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.dto.membership.GetMembershipsResponse;
 import GymApp.dto.membership.MembershipDto;
 import GymApp.entity.Account;
-import GymApp.entity.Branch;
 import GymApp.entity.Membership;
-import GymApp.enums.MembershipType;
 import GymApp.exception.NotFoundException;
 import GymApp.security.SecurityConfig;
 import GymApp.security.authenticationProvider.AccountAuthenticationProviderService;
-import GymApp.service.AccountService;
-import GymApp.service.CurrentUserService;
-import GymApp.service.MembershipService;
+import GymApp.service.Intrface.AccountService;
+import GymApp.service.Intrface.CurrentUserService;
+import GymApp.service.Intrface.MembershipService;
 
 import GymApp.service.membership.Util;
 import GymApp.util.entityAndDtoMappers.MembershipMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -36,8 +33,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static GymApp.service.membership.Util.getSampleMembership;

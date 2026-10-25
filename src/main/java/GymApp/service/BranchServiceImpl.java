@@ -3,6 +3,7 @@ package GymApp.service;
 import GymApp.dao.BranchRepository;
 import GymApp.entity.Branch;
 import GymApp.exception.NotFoundException;
+import GymApp.service.Intrface.BranchService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

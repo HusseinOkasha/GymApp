@@ -1,4 +1,4 @@
-package GymApp.service;
+package GymApp.service.Intrface;
 
 import GymApp.entity.Workout;
 

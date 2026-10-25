@@ -1,4 +1,4 @@
-package GymApp.service;
+package GymApp.service.Intrface;
 
 import GymApp.dto.RegisterDto;
 import GymApp.entity.Account;
@@ -6,5 +6,5 @@ import GymApp.entity.Account;
 public interface AuthService {
 
     void setPassword(String password);
-    Account register(RegisterDto dto);
+    String register(RegisterDto dto);
 }

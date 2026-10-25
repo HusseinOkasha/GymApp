@@ -5,6 +5,7 @@ import GymApp.dao.UserBranchRepository;
 import GymApp.entity.Account;
 import GymApp.entity.UserBranch;
 import GymApp.exception.NotFoundException;
+import GymApp.service.Intrface.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

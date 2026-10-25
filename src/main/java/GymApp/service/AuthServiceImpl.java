@@ -1,39 +1,44 @@
 package GymApp.service;
 
-import GymApp.dao.AccountRepository;
 import GymApp.dao.RoleRepository;
 import GymApp.dto.RegisterDto;
 import GymApp.entity.Account;
-import GymApp.entity.Branch;
-import GymApp.entity.UserBranch;
 import GymApp.entity.UserRole;
 import GymApp.exception.AccountAlreadyExistsException;
+import GymApp.service.Intrface.AccountService;
+import GymApp.service.Intrface.AuthService;
+import GymApp.service.Intrface.BranchService;
+import GymApp.service.Intrface.CurrentUserService;
+import GymApp.service.Intrface.RegisterService;
+import GymApp.service.Intrface.RoleService;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
 public class AuthServiceImpl implements AuthService {
-    private final AccountRepository accountRepository;
-    private final RoleRepository roleRepository;
+    private final AccountService accountServiceImpl;
     private final CurrentUserService currentUserService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final BranchService branchService;
+    private final RegisterService registerServiceImpl;
+    private final TokenService tokenService;
 
     public AuthServiceImpl(
-            AccountRepository accountRepository,
-            RoleRepository roleRepository,
+            AccountService accountServiceImpl,
             CurrentUserService currentUserService,
             BCryptPasswordEncoder bCryptPasswordEncoder,
-            BranchService branchService
+            RegisterService registerServiceImpl,
+            TokenService tokenService
     ) {
-        this.accountRepository = accountRepository;
-        this.roleRepository = roleRepository;
+        this.accountServiceImpl = accountServiceImpl;
         this.currentUserService = currentUserService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.branchService = branchService;
+        this.registerServiceImpl = registerServiceImpl;
+        this.tokenService = tokenService;
     }
 
     @Override
@@ -41,52 +46,23 @@ public class AuthServiceImpl implements AuthService {
         Account account = currentUserService.getCurrentUser();
         // Encrypt the password then save it to the database.
         account.setPassword(bCryptPasswordEncoder.encode(password));
-        accountRepository.save(account);
+        accountServiceImpl.save(account);
     }
 
-    public Account register(RegisterDto dto) {
-
-        // Map RegisterDto to Account object
-        Account account = new Account.Builder()
-                .firstName(dto.firstName())
-                .secondName(dto.secondName())
-                .thirdName(dto.thirdName())
-                .email(dto.email())
-                .phoneNumber(dto.phoneNumber())
-                .password("RandomValue")
-                .build();
-
-        // Check the existence of the user in the system and throw exception if it already exists
-        // in the database
-        accountRepository.findByEmail(account.getEmail()).ifPresent((acc) -> {
-            throw new AccountAlreadyExistsException("User with this email already exists");
-        });
-
-        // Assign Branches to the account
-        List<Branch> branches = branchService.findAllByIds(dto.branches());
-        account
-                .getBranches()
-                .addAll(branches
-                                .stream()
-                                .map(branch -> new UserBranch.Builder()
-                                        .account(account)
-                                        .branch(branch)
-                                        .id(new UserBranch.Id(account.getId(), branch.getId()))
-                                        .build())
-                                .toList());
-
-        // Assign role to the account.
-        UserRole userRole = new UserRole(
-                account,
-                roleRepository
-                        .findRoleByName(dto.role())
-                        .orElseThrow(() -> new AccountAlreadyExistsException("Can't find role: " +
-                                                                             dto.role()))
+    @Transactional
+    public String register(RegisterDto dto) {
+        Account account = registerServiceImpl.register(dto);
+        String token = tokenService.generateToken(
+                account.getEmail(),
+                account.getRoles()
+                       .stream()
+                       .map((userRole) -> new SimpleGrantedAuthority(userRole.getRole()
+                                                                             .getAuthority()))
+                       .toList(),
+                Map.of()
         );
-        account.setRoles(Set.of(userRole));
-
         // save the account to the database
-        return accountRepository.save(account);
+        return token;
     }
 
 

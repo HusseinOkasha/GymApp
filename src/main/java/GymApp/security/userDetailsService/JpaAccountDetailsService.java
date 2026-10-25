@@ -2,7 +2,7 @@ package GymApp.security.userDetailsService;
 
 import GymApp.entity.Account;
 import GymApp.security.userDetails.CustomUserDetails;
-import GymApp.service.AccountService;
+import GymApp.service.Intrface.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

@@ -2,6 +2,7 @@ package GymApp.service;
 
 import GymApp.dao.AccountWorkoutRepository;
 import GymApp.entity.AccountWorkout;
+import GymApp.service.Intrface.AccountWorkoutService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -8,11 +8,10 @@ import GymApp.dto.membership.MembershipDto;
 import GymApp.entity.Account;
 import GymApp.entity.Branch;
 import GymApp.entity.Membership;
-import GymApp.enums.MembershipType;
 import GymApp.exception.NotFoundException;
-import GymApp.service.AccountService;
-import GymApp.service.BranchService;
-import GymApp.service.CurrentUserService;
+import GymApp.service.Intrface.AccountService;
+import GymApp.service.Intrface.BranchService;
+import GymApp.service.Intrface.CurrentUserService;
 import GymApp.service.MembershipServiceImpl;
 import GymApp.util.entityAndDtoMappers.MembershipMapper;
 import org.junit.jupiter.api.Assertions;
@@ -30,8 +29,6 @@ import org.springframework.data.domain.Sort;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;

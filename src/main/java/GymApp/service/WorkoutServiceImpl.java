@@ -2,6 +2,7 @@ package GymApp.service;
 
 import GymApp.dao.WorkoutRepository;
 import GymApp.entity.Workout;
+import GymApp.service.Intrface.WorkoutService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -9,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class WorkoutServiceImpl implements  WorkoutService{
+public class WorkoutServiceImpl implements WorkoutService {
     @Autowired
     private WorkoutRepository workoutRepository;
 

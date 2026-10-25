@@ -21,6 +21,7 @@ public record RegisterDto(
         String phoneNumber,
         @NotNull(message = "Role shouldn't be empty")
         Roles role,
-        @NotNull(message= "Branches shouldn't be empty") List<Long> branches
+//        @NotNull(message= "Branches shouldn't be empty")
+        List<Long> branches
 ) {
 }

@@ -7,7 +7,8 @@ import GymApp.dto.SetPasswordDto;
 import GymApp.dto.TokenDto;
 import GymApp.entity.Account;
 import GymApp.security.userDetails.CustomUserDetails;
-import GymApp.service.AuthService;
+import GymApp.service.Intrface.AuthService;
+import GymApp.service.Intrface.RegisterService;
 import GymApp.service.TokenService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -23,12 +24,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AuthService authService;
     private final TokenService tokenService;
     private final AuthenticationManager authenticationManager;
@@ -38,11 +37,13 @@ public class AuthController {
             AuthService authService,
             TokenService tokenService,
             AuthenticationManager authenticationManager
+
     ) {
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+
         this.authService = authService;
         this.tokenService = tokenService;
         this.authenticationManager = authenticationManager;
+
     }
 
     @PostMapping("/login")
@@ -62,22 +63,8 @@ public class AuthController {
     @PostMapping("/register")
     @Validated
     public ResponseEntity register(@Valid @RequestBody RegisterDto dto) {
-        // Create account
-        Account dbAccount = authService.register(dto);
 
-        // Generate token to be embedded in the invitation link as a path variable
-        String token = tokenService.generateToken(
-                dbAccount.getEmail(),
-                dbAccount
-                        .getRoles()
-                        .stream()
-                        .map((userRole) -> new SimpleGrantedAuthority(userRole
-                                                                              .getRole()
-                                                                              .getAuthority()))
-                        .toList(),
-                Map.of()
-        );
-        return ResponseEntity.ok(token);
+        return ResponseEntity.ok(authService.register(dto));
 
     }
 

@@ -5,7 +5,7 @@
 //import GymApp.entity.Account;
 //import GymApp.exception.AccountNotFoundException;
 //import GymApp.security.EncryptionService;
-//import GymApp.service.AccountService;
+//import GymApp.service.Intrface.AccountService;
 //import GymApp.util.entityAndDtoMappers.AccountMapper;
 //import jakarta.validation.Valid;
 //import org.springframework.beans.factory.annotation.Autowired;
