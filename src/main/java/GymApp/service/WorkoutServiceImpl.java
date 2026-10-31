@@ -26,8 +26,8 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    public List<Workout> findByAccountId(long id) {
-        return workoutRepository.findByAccountWorkouts_Id_AccountId(id);
+    public List<Workout> findByUserId(long id) {
+        return workoutRepository.findByUserWorkouts_Id_UserId(id);
     }
 
     @Override

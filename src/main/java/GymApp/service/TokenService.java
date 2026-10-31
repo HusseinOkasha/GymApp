@@ -1,6 +1,6 @@
 package GymApp.service;
 
-import GymApp.service.Intrface.AccountService;
+import GymApp.service.Intrface.UserService;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
@@ -16,12 +16,12 @@ public class TokenService {
 
     private final JwtEncoder encoder;
     private final JwtDecoder jwtDecoder;
-    private final AccountService accountService;
+    private final UserService userService;
 
-    public TokenService(JwtEncoder encoder, JwtDecoder jwtDecoder, AccountService accountService) {
+    public TokenService(JwtEncoder encoder, JwtDecoder jwtDecoder, UserService userService) {
         this.encoder = encoder;
         this.jwtDecoder = jwtDecoder;
-        this.accountService = accountService;
+        this.userService = userService;
     }
 
     public String generateToken(

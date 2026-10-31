@@ -5,11 +5,11 @@ import GymApp.dto.membership.CreateMembershipRequest;
 import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.dto.membership.GetMembershipsResponse;
 import GymApp.dto.membership.MembershipDto;
-import GymApp.entity.Account;
+import GymApp.entity.User;
 import GymApp.entity.Branch;
 import GymApp.entity.Membership;
 import GymApp.exception.NotFoundException;
-import GymApp.service.Intrface.AccountService;
+import GymApp.service.Intrface.UserService;
 import GymApp.service.Intrface.BranchService;
 import GymApp.service.Intrface.CurrentUserService;
 import GymApp.service.MembershipServiceImpl;
@@ -48,7 +48,7 @@ public class MembershipServiceTest {
     MembershipRepository membershipRepo;
 
     @Mock
-    AccountService accountService;
+    UserService userService;
 
     @Mock
     CurrentUserService currentUserService;
@@ -67,10 +67,10 @@ public class MembershipServiceTest {
     public void createMembershipReturns_CreatedMembership() {
 
         // Prepare ( Employee / Admin ) account
-        Account nonClientAccount = Util.getSampleNonClientAccount();
+        User nonClientUser = Util.getSampleNonClientAccount();
 
         // Prepare Client Account
-        Account client = Util.getSampleClient();
+        User client = Util.getSampleClient();
 
         // Prepare Branch object
         Branch branch = Util.getSampleBranch();
@@ -88,10 +88,10 @@ public class MembershipServiceTest {
         when(membershipRepo.save(any())).thenReturn(membership);
 
         // Mock ( Current User Service )
-        when(currentUserService.getCurrentUser()).thenReturn(nonClientAccount);
+        when(currentUserService.getCurrentUser()).thenReturn(nonClientUser);
 
         // Mock the ( AccountService )
-        when(accountService.findById(client.getId())).thenReturn(client);
+        when(userService.findById(client.getId())).thenReturn(client);
 
         // Mock the ( BranchService )
         when(branchService.findBranchById(any())).thenReturn(branch);
@@ -107,8 +107,8 @@ public class MembershipServiceTest {
     @Test
     public void createMembershipThrows_AccountNotFoundException() {
         // Get Sample Objects
-        Account client = Util.getSampleClient();
-        Account nonClientAccount = Util.getSampleNonClientAccount();
+        User client = Util.getSampleClient();
+        User nonClientUser = Util.getSampleNonClientAccount();
         Branch branch = Util.getSampleBranch();
 
         // Prepare ( CreateMembershipRequest )
@@ -118,11 +118,11 @@ public class MembershipServiceTest {
         Membership membership = Util.getSampleMembership();
 
         // Mock the ( AccountService )
-        when(accountService.findById(client.getId())).thenThrow(new NotFoundException(
+        when(userService.findById(client.getId())).thenThrow(new NotFoundException(
                 "Account with id 1 not found"));
 
         // Mock the ( CurrentUserService )
-        when(currentUserService.getCurrentUser()).thenReturn(new Account.Builder().id(1).build());
+        when(currentUserService.getCurrentUser()).thenReturn(new User.Builder().id(1).build());
 
 
         // Act & Assert
@@ -134,7 +134,7 @@ public class MembershipServiceTest {
         // Verify
         Assertions.assertEquals("Account with id 1 not found", exception.getMessage());
         // Verify that the findById method of the account service is called once.
-        verify(accountService).findById(client.getId());
+        verify(userService).findById(client.getId());
         // Verify that the save method of the membership repository is never called.
         verify(membershipRepo, never()).save(any());
 

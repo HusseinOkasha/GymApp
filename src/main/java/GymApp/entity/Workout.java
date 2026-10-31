@@ -29,7 +29,7 @@ public class Workout {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "workout", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    private Set<AccountWorkout> accountWorkouts = new HashSet<>();
+    private Set<UserWorkout> userWorkouts = new HashSet<>();
 
     @ElementCollection
     @CollectionTable(name = "exercise", joinColumns = @JoinColumn(name = "workout_id"))
@@ -77,12 +77,12 @@ public class Workout {
         this.exercises = exercises;
     }
 
-    public Set<AccountWorkout> getAccountWorkouts() {
-        return accountWorkouts;
+    public Set<UserWorkout> getUserWorkouts() {
+        return userWorkouts;
     }
 
-    public void setAccountWorkouts(Set<AccountWorkout> accountWorkouts) {
-        this.accountWorkouts = accountWorkouts;
+    public void setUserWorkouts(Set<UserWorkout> userWorkouts) {
+        this.userWorkouts = userWorkouts;
     }
 
     public static class Builder{
@@ -90,7 +90,7 @@ public class Workout {
         private String name;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
-        private Set<AccountWorkout>accountWorkouts;
+        private Set<UserWorkout> userWorkouts;
         private List<Exercise>exercises;
 
         public Builder(){}
@@ -111,8 +111,8 @@ public class Workout {
             this.updatedAt = updatedAt;
             return this;
         }
-        public Builder accountWorkouts(Set<AccountWorkout> accountWorkouts){
-            this.accountWorkouts = new HashSet<>(accountWorkouts);
+        public Builder userWorkouts(Set<UserWorkout> userWorkouts){
+            this.userWorkouts = new HashSet<>(userWorkouts);
             return this;
         }
         public Builder exercises(List<Exercise> exercises){
@@ -125,7 +125,7 @@ public class Workout {
             workout.name = this.name;
             workout.createdAt = this.createdAt;
             workout.updatedAt = this.updatedAt;
-            workout.accountWorkouts =this.accountWorkouts;
+            workout.userWorkouts =this.userWorkouts;
             workout.exercises = this.exercises;
 
             return workout;

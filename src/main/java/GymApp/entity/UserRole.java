@@ -2,8 +2,6 @@ package GymApp.entity;
 
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -16,28 +14,28 @@ public class UserRole {
     @Embeddable
     public static class Id implements Serializable {
 
-        @Column(name = "account_id")
-        private Long accountId;
+        @Column(name = "user_id")
+        private Long userId;
 
         @Column(name = "role_id")
         private Long  roleId;
 
         public Id(){}
 
-        public Id(Long accountId, Long roleId) {
+        public Id(Long userId, Long roleId) {
             this.roleId = roleId;
-            this.accountId = accountId;
+            this.userId = userId;
         }
 
-        public void setAccountId(Long accountId){
-            this.accountId = accountId;
+        public void setUserId(Long userId){
+            this.userId = userId;
         }
 
         public void setRoleId(Long roleId){
             this.roleId = roleId;
         }
-        public Long getAccountId(){
-            return this.accountId;
+        public Long getUserId(){
+            return this.userId;
         }
         public Long getRoleId(){
             return this.roleId;
@@ -46,12 +44,12 @@ public class UserRole {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof UserRole.Id id)) return false;
-            return Objects.equals(roleId, id.roleId) && Objects.equals(accountId, id.accountId);
+            return Objects.equals(roleId, id.roleId) && Objects.equals(userId, id.userId);
         }
 
         @Override
         public int hashCode() {
-            return roleId.hashCode() + accountId.hashCode();
+            return roleId.hashCode() + userId.hashCode();
         }
 
     }
@@ -64,9 +62,9 @@ public class UserRole {
     private Role role;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id", insertable = false, updatable = false)
-    @MapsId("accountId")
-    private Account account;
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @MapsId("userId")
+    private User user;
 
 
     @Column(name = "created_at", nullable = false)
@@ -76,10 +74,10 @@ public class UserRole {
     private LocalDateTime updatedAt;
 
     public UserRole() {}
-    public UserRole(Account account, Role role) {
-        this.account = account;
+    public UserRole(User user, Role role) {
+        this.user = user;
         this.role = role;
-        this.id = new UserRole.Id(account.getId(), role.getId());
+        this.id = new UserRole.Id(user.getId(), role.getId());
     }
 
     public UserRole.Id getId() {
@@ -98,12 +96,12 @@ public class UserRole {
         this.role = role;
     }
 
-    public Account getAccount() {
-        return account;
+    public User getUser() {
+        return user;
     }
 
-    public void setAccount(Account account) {
-        this.account = account;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -125,7 +123,7 @@ public class UserRole {
     public static class Builder {
         private UserRole.Id id;
         private Role role;
-        private Account account;
+        private User user;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
@@ -140,8 +138,8 @@ public class UserRole {
             return this;
         }
 
-        public UserRole.Builder account(Account account) {
-            this.account = account;
+        public UserRole.Builder user(User user) {
+            this.user = user;
             return this;
         }
 
@@ -159,7 +157,7 @@ public class UserRole {
             UserRole userRole = new UserRole();
             userRole.id = this.id;
             userRole.role = this.role;
-            userRole.account = this.account;
+            userRole.user = this.user;
             userRole.createdAt = this.createdAt;
             userRole.updatedAt = this.updatedAt;
             return userRole;

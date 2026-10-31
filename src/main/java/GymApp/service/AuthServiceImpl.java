@@ -1,40 +1,34 @@
 package GymApp.service;
 
-import GymApp.dao.RoleRepository;
 import GymApp.dto.RegisterDto;
-import GymApp.entity.Account;
-import GymApp.entity.UserRole;
-import GymApp.exception.AccountAlreadyExistsException;
-import GymApp.service.Intrface.AccountService;
+import GymApp.entity.User;
+import GymApp.service.Intrface.UserService;
 import GymApp.service.Intrface.AuthService;
-import GymApp.service.Intrface.BranchService;
 import GymApp.service.Intrface.CurrentUserService;
 import GymApp.service.Intrface.RegisterService;
-import GymApp.service.Intrface.RoleService;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
-import java.util.Set;
 
 @Service
 public class AuthServiceImpl implements AuthService {
-    private final AccountService accountServiceImpl;
+    private final UserService userServiceImpl;
     private final CurrentUserService currentUserService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final RegisterService registerServiceImpl;
     private final TokenService tokenService;
 
     public AuthServiceImpl(
-            AccountService accountServiceImpl,
+            UserService userServiceImpl,
             CurrentUserService currentUserService,
             BCryptPasswordEncoder bCryptPasswordEncoder,
             RegisterService registerServiceImpl,
             TokenService tokenService
     ) {
-        this.accountServiceImpl = accountServiceImpl;
+        this.userServiceImpl = userServiceImpl;
         this.currentUserService = currentUserService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.registerServiceImpl = registerServiceImpl;
@@ -43,22 +37,22 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void setPassword(String password) {
-        Account account = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
         // Encrypt the password then save it to the database.
-        account.setPassword(bCryptPasswordEncoder.encode(password));
-        accountServiceImpl.save(account);
+        user.setPassword(bCryptPasswordEncoder.encode(password));
+        userServiceImpl.save(user);
     }
 
     @Transactional
     public String register(RegisterDto dto) {
-        Account account = registerServiceImpl.register(dto);
+        User user = registerServiceImpl.register(dto);
         String token = tokenService.generateToken(
-                account.getEmail(),
-                account.getRoles()
-                       .stream()
-                       .map((userRole) -> new SimpleGrantedAuthority(userRole.getRole()
+                user.getEmail(),
+                user.getRoles()
+                    .stream()
+                    .map((userRole) -> new SimpleGrantedAuthority(userRole.getRole()
                                                                              .getAuthority()))
-                       .toList(),
+                    .toList(),
                 Map.of()
         );
         // save the account to the database

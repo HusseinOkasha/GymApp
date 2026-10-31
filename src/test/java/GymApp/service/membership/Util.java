@@ -2,8 +2,7 @@ package GymApp.service.membership;
 
 import GymApp.dto.membership.CreateMembershipRequest;
 import GymApp.dto.membership.CreateMembershipResponse;
-import GymApp.dto.membership.MembershipDto;
-import GymApp.entity.Account;
+import GymApp.entity.User;
 import GymApp.entity.Branch;
 import GymApp.entity.Membership;
 import GymApp.enums.MembershipType;
@@ -14,8 +13,8 @@ import java.util.List;
 
 public class Util {
     public static Membership getSampleMembership() {
-        Account client = getSampleClient();
-        Account createdBy = getSampleNonClientAccount();
+        User client = getSampleClient();
+        User createdBy = getSampleNonClientAccount();
         Branch branch = getSampleBranch();
         return new Membership(
                 1L,
@@ -34,12 +33,12 @@ public class Util {
         return new Branch.Builder().id(1L).build();
     }
 
-    public static Account getSampleClient() {
-        return new Account.Builder().id(2).build();
+    public static User getSampleClient() {
+        return new User.Builder().id(2).build();
     }
 
-    public static Account getSampleNonClientAccount() {
-        return new Account.Builder().id(1).build();
+    public static User getSampleNonClientAccount() {
+        return new User.Builder().id(1).build();
     }
 
     /**
@@ -47,9 +46,9 @@ public class Util {
      *
      */
     public static CreateMembershipResponse getSampleMembershipResponse() {
-        Account client = getSampleClient();
+        User client = getSampleClient();
         Branch branch = getSampleBranch();
-        Account createdBy = getSampleNonClientAccount();
+        User createdBy = getSampleNonClientAccount();
         return new CreateMembershipResponse(
                 1L,
                 LocalDate.now(),
@@ -67,7 +66,7 @@ public class Util {
      *
      */
     public static CreateMembershipRequest getSampleMembershipRequest() {
-        Account client = getSampleClient();
+        User client = getSampleClient();
         Branch branch = getSampleBranch();
         return new CreateMembershipRequest(
                 LocalDate.now(),
@@ -89,8 +88,8 @@ public class Util {
                         .membershipType(MembershipType.YEAR)
                         .createdAt(LocalDateTime.now())
                         .branch(new Branch.Builder().id(1L).name("branch 1").build())
-                        .createdBy(new Account.Builder().id(1).build())
-                        .client(new Account.Builder().id(2).build())
+                        .createdBy(new User.Builder().id(1).build())
+                        .client(new User.Builder().id(2).build())
                         .build(),
                 new Membership.Builder()
                         .id(2L)
@@ -100,8 +99,8 @@ public class Util {
                         .membershipType(MembershipType.YEAR)
                         .createdAt(LocalDateTime.now())
                         .branch(new Branch.Builder().id(2L).name("branch 2").build())
-                        .createdBy(new Account.Builder().id(1).build())
-                        .client(new Account.Builder().id(3).build())
+                        .createdBy(new User.Builder().id(1).build())
+                        .client(new User.Builder().id(3).build())
                         .build()
         );
 

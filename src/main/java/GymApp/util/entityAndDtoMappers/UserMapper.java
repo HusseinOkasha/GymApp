@@ -2,29 +2,30 @@ package GymApp.util.entityAndDtoMappers;
 
 import GymApp.dto.AccountProfileDto;
 import GymApp.dto.CreateAccountDto;
-import GymApp.entity.Account;
+import GymApp.entity.User;
 
-public class AccountMapper {
+public class UserMapper {
     // Account ==> AccountProfileDto
-    public static AccountProfileDto accountEntityToAccountProfileDto(Account account) {
+    public static AccountProfileDto accountEntityToAccountProfileDto(User user) {
         AccountProfileDto accountProfileDto = new AccountProfileDto(
-                account.getId(), account.getFirstName(), account.getSecondName(), account.getThirdName(),
-                account.getEmail(), account.getPhoneNumber(), account.getCreatedAt(),
-                account.getUpdatedAt()
+                user.getId(), user.getFirstName(), user.getSecondName(), user.getThirdName(),
+                user.getEmail(), user.getPhoneNumber(), user.getCreatedAt(),
+                user.getUpdatedAt()
         );
         return accountProfileDto;
     }
 
     // Account ==> createAccountDto
-    public static CreateAccountDto accountEntityToCreateAccountDto(Account account) {
-        return new CreateAccountDto(account.getFirstName(), account.getSecondName(), account.getThirdName(),
-                account.getEmail(), account.getPhoneNumber(), account.getPassword());
+    public static CreateAccountDto accountEntityToCreateAccountDto(User user) {
+        return new CreateAccountDto(
+                user.getFirstName(), user.getSecondName(), user.getThirdName(),
+                user.getEmail(), user.getPhoneNumber(), user.getPassword());
 
     }
 
     // accountProfileDto ==> Account
-    public static Account accountProfileDtoToAccountEntity(AccountProfileDto accountProfileDto) {
-        Account.Builder accountBuilder = new Account.Builder();
+    public static User accountProfileDtoToAccountEntity(AccountProfileDto accountProfileDto) {
+        User.Builder accountBuilder = new User.Builder();
         return accountBuilder.firstName(accountProfileDto.firstName())
                 .secondName(accountProfileDto.secondName())
                 .thirdName(accountProfileDto.thirdName())
@@ -36,8 +37,8 @@ public class AccountMapper {
     }
 
     //  createAccountDto ==> Account
-    public static Account createAccountDtoToAccountEntity(CreateAccountDto createAccountDto) {
-        Account.Builder accountBuilder = new Account.Builder();
+    public static User createAccountDtoToAccountEntity(CreateAccountDto createAccountDto) {
+        User.Builder accountBuilder = new User.Builder();
         return accountBuilder.firstName(createAccountDto.firstName())
                 .secondName(createAccountDto.secondName())
                 .thirdName(createAccountDto.thirdName())

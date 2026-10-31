@@ -4,7 +4,7 @@ import GymApp.dto.membership.CreateMembershipRequest;
 import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.dto.membership.GetMembershipsResponse;
 import GymApp.dto.membership.MembershipDto;
-import GymApp.service.Intrface.AccountService;
+import GymApp.service.Intrface.UserService;
 import GymApp.service.Intrface.CurrentUserService;
 import GymApp.service.Intrface.MembershipService;
 import jakarta.validation.Valid;
@@ -28,14 +28,14 @@ import java.net.URI;
 public class MembershipController {
 
     private final MembershipService membershipService;
-    private final AccountService accountService;
+    private final UserService userService;
     private final CurrentUserService currentUserService;
 
-    public MembershipController(MembershipService membershipService, AccountService accountService,
+    public MembershipController(MembershipService membershipService, UserService userService,
                                 CurrentUserService currentUserService
     ) {
         this.membershipService = membershipService;
-        this.accountService = accountService;
+        this.userService = userService;
         this.currentUserService = currentUserService;
     }
 
@@ -60,7 +60,7 @@ public class MembershipController {
 
     ) {
         // Check that the current user has access on the branch, will throw exception if not.
-        accountService.hasAccessOnBranch(currentUserService.getCurrentUser().getId(), branchId);
+        userService.hasAccessOnBranch(currentUserService.getCurrentUser().getId(), branchId);
         return ResponseEntity.ok(membershipService.getMemberships(branchId, page, size, sort));
     }
 
@@ -72,7 +72,7 @@ public class MembershipController {
             @PathVariable long membershipId
     ) {
         // Check that the current user has access on the branch, will throw exception if not.
-        accountService.hasAccessOnBranch(currentUserService.getCurrentUser().getId(), branchId);
+        userService.hasAccessOnBranch(currentUserService.getCurrentUser().getId(), branchId);
         return ResponseEntity.ok(membershipService.getMembershipById(membershipId));
     }
 

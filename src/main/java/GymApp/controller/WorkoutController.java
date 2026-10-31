@@ -1,13 +1,13 @@
 package GymApp.controller;
 
 import GymApp.dto.WorkoutDto;
-import GymApp.entity.AccountWorkout;
+import GymApp.entity.UserWorkout;
 import GymApp.entity.Exercise;
 import GymApp.entity.Workout;
 import GymApp.enums.WorkoutAccessType;
 import GymApp.exception.WorkoutNotFoundException;
-import GymApp.service.Intrface.AccountService;
-import GymApp.service.Intrface.AccountWorkoutService;
+import GymApp.service.Intrface.UserService;
+import GymApp.service.Intrface.UserWorkoutService;
 import GymApp.service.Intrface.WorkoutService;
 import GymApp.util.entityAndDtoMappers.ExerciseMapper;
 import GymApp.util.entityAndDtoMappers.WorkoutMapper;
@@ -29,10 +29,10 @@ public class WorkoutController {
     private WorkoutService workoutService;
 
     @Autowired
-    private AccountService accountService;
+    private UserService userService;
 
     @Autowired
-    private AccountWorkoutService accountWorkoutService;
+    private UserWorkoutService userWorkoutService;
 
     @PostMapping("/workouts")
     @Validated
@@ -49,12 +49,12 @@ public class WorkoutController {
         long accountId = Long.parseLong(authentication.getName());
 
         // create account_workout entity(link).
-        AccountWorkout.Builder accountWorkoutBuilder = new AccountWorkout.Builder();
-        AccountWorkout accountWorkout = accountWorkoutBuilder.id(new AccountWorkout.Id(accountId, dbworkout.getId()))
-                .accessType(WorkoutAccessType.WRITE).build();
+        UserWorkout.Builder accountWorkoutBuilder = new UserWorkout.Builder();
+        UserWorkout userWorkout = accountWorkoutBuilder.id(new UserWorkout.Id(accountId, dbworkout.getId()))
+                                                       .accessType(WorkoutAccessType.WRITE).build();
 
         // save the account workout to the database.
-        accountWorkoutService.save(accountWorkout);
+        userWorkoutService.save(userWorkout);
 
         // convert the workout entity to workoutDto.
         return WorkoutMapper.workoutEntityToWorkoutDto(dbworkout);
@@ -68,7 +68,7 @@ public class WorkoutController {
         long account_id = Long.parseLong(authentication.getName());
 
         // 2) fetch all workouts which that account has using the account id
-        List<Workout> workouts = workoutService.findByAccountId(account_id);
+        List<Workout> workouts = workoutService.findByUserId(account_id);
 
         // 3) convert workout entity to workoutDto.
         return workouts.stream().map(WorkoutMapper::workoutEntityToWorkoutDto).toList();
@@ -82,13 +82,13 @@ public class WorkoutController {
         long accountId = Long.parseLong(authentication.getName());
 
         // 2) Check if this workout belongs to that user.
-        Optional<AccountWorkout> result = accountWorkoutService.findByAccountIdAndWorkoutId(accountId, workoutId);
-        AccountWorkout dbAccountWorkout = result.orElseThrow(
+        Optional<UserWorkout> result = userWorkoutService.findByAccountIdAndWorkoutId(accountId, workoutId);
+        UserWorkout dbUserWorkout = result.orElseThrow(
                 () -> new AccessDeniedException("You can't access this workout")
         );
 
         // 3) Get the required workout.
-        Workout dbWorkout = dbAccountWorkout.getWorkout();
+        Workout dbWorkout = dbUserWorkout.getWorkout();
 
         // 4) convert workout entity to workoutDto.
         return WorkoutMapper.workoutEntityToWorkoutDto(dbWorkout);
@@ -102,16 +102,16 @@ public class WorkoutController {
         long accountId = Long.parseLong(authentication.getName());
 
         // check if this user can access this workout.
-        Optional<AccountWorkout> accountWorkoutFetchResult =
-                accountWorkoutService.findByAccountIdAndWorkoutId(accountId, workoutId);
+        Optional<UserWorkout> accountWorkoutFetchResult =
+                userWorkoutService.findByAccountIdAndWorkoutId(accountId, workoutId);
 
         // in case he can't access this workout throw access denied exception.
-        AccountWorkout accountWorkout = accountWorkoutFetchResult.orElseThrow(
+        UserWorkout userWorkout = accountWorkoutFetchResult.orElseThrow(
                 ()-> new AccessDeniedException("you can't access this workout")
         );
 
         // check if he can update the workout.
-        if(accountWorkout.getAccessType() == WorkoutAccessType.READ){
+        if(userWorkout.getAccessType() == WorkoutAccessType.READ){
             throw new AccessDeniedException("you can't update this workout.");
         }
 
@@ -145,17 +145,17 @@ public class WorkoutController {
         long accountId = Long.parseLong(authentication.getName());
 
         // check if the user can access this workout.
-        Optional<AccountWorkout>accountWorkoutFetchResult =
-                accountWorkoutService.findByAccountIdAndWorkoutId(accountId, workoutId);
+        Optional<UserWorkout>accountWorkoutFetchResult =
+                userWorkoutService.findByAccountIdAndWorkoutId(accountId, workoutId);
 
         // in case the user has no access to the workout throw Access denied exception
-        AccountWorkout dbAccountWorkout = accountWorkoutFetchResult.orElseThrow(()-> new AccessDeniedException(""));
+        UserWorkout dbUserWorkout = accountWorkoutFetchResult.orElseThrow(()-> new AccessDeniedException(""));
 
         // in case the user has READ access to the workout, just delete the link.
-        if(dbAccountWorkout.getAccessType() == WorkoutAccessType.READ){
-            accountWorkoutService.deleteById(new AccountWorkout.Id(accountId, workoutId));
+        if(dbUserWorkout.getAccessType() == WorkoutAccessType.READ){
+            userWorkoutService.deleteById(new UserWorkout.Id(accountId, workoutId));
         }
-        else if(dbAccountWorkout.getAccessType() == WorkoutAccessType.WRITE){
+        else if(dbUserWorkout.getAccessType() == WorkoutAccessType.WRITE){
             // in case the user has WRITE  access to the workout, delete the workout itself
             // note: by deleting the workout any associated link(account_workout) will be deleted as well.
             workoutService.deleteById(workoutId);

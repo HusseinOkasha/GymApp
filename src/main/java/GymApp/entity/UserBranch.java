@@ -28,9 +28,9 @@ public class UserBranch {
     private Branch branch;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id", insertable = false, updatable = false)
-    @MapsId("accountId")
-    private Account account;
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @MapsId("userId")
+    private User user;
 
 
     @Column(name = "created_at", nullable = false)
@@ -59,12 +59,12 @@ public class UserBranch {
         this.branch = branch;
     }
 
-    public Account getAccount() {
-        return account;
+    public User getUser() {
+        return user;
     }
 
-    public void setAccount(Account account) {
-        this.account = account;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -89,28 +89,28 @@ public class UserBranch {
     @Embeddable
     public static class Id implements Serializable {
 
-        @Column(name = "account_id")
-        private Long accountId;
+        @Column(name = "user_id")
+        private Long userId;
 
         @Column(name = "branch_id")
         private Long  branchId;
 
         public Id(){}
 
-        public Id(Long accountId, Long branchId) {
+        public Id(Long userId, Long branchId) {
             this.branchId = branchId;
-            this.accountId = accountId;
+            this.userId = userId;
         }
 
-        public void setAccountId(Long accountId){
-            this.accountId = accountId;
+        public void setUserId(Long userId){
+            this.userId = userId;
         }
 
         public void setBranchId(Long branchId){
             this.branchId = branchId;
         }
-        public Long getAccountId(){
-            return this.accountId;
+        public Long getUserId(){
+            return this.userId;
         }
         public Long getBranchId(){
             return this.branchId;
@@ -122,20 +122,20 @@ public class UserBranch {
                 return false;
             }
             Id id = (Id) o;
-            return Objects.equals(getAccountId(), id.getAccountId()) &&
+            return Objects.equals(getUserId(), id.getUserId()) &&
                    Objects.equals(getBranchId(), id.getBranchId());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getAccountId(), getBranchId());
+            return Objects.hash(getUserId(), getBranchId());
         }
     }
 
     public static class Builder {
         private Id id;
         private Branch branch;
-        private Account account;
+        private User user;
 
         public Builder() {
         }
@@ -148,8 +148,8 @@ public class UserBranch {
             return this;
         }
 
-        public Builder account(Account account) {
-            this.account = account;
+        public Builder user(User user) {
+            this.user = user;
             return this;
         }
 
@@ -157,7 +157,7 @@ public class UserBranch {
             UserBranch userBranch = new UserBranch();
             userBranch.id = this.id;
             userBranch.branch = this.branch;
-            userBranch.account = this.account;
+            userBranch.user = this.user;
             return userBranch;
         }
     }

@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "account_workout")
-public class AccountWorkout {
+@Table(name = "user_workout")
+public class UserWorkout {
 
     @Embeddable
     public static class Id implements Serializable {
@@ -18,26 +18,26 @@ public class AccountWorkout {
         @Column(name = "workout_id")
         private Long workoutId;
 
-        @Column(name = "account_id")
-        private Long  accountId;
+        @Column(name = "user_id")
+        private Long  userId;
 
         public Id(){}
 
-        public Id(Long accountId, Long workoutId) {
+        public Id(Long userId, Long workoutId) {
             this.workoutId = workoutId;
-            this.accountId = accountId;
+            this.userId = userId;
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Id id)) return false;
-            return Objects.equals(workoutId, id.workoutId) && Objects.equals(accountId, id.accountId);
+            return Objects.equals(workoutId, id.workoutId) && Objects.equals(userId, id.userId);
         }
 
         @Override
         public int hashCode() {
-            return workoutId.hashCode() + accountId.hashCode();
+            return workoutId.hashCode() + userId.hashCode();
         }
 
     }
@@ -49,8 +49,8 @@ public class AccountWorkout {
     private Workout workout;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id", insertable = false, updatable = false)
-    private Account account;
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private User user;
 
     @Column(name="access_type", nullable = false)
     private WorkoutAccessType accessType;
@@ -61,7 +61,7 @@ public class AccountWorkout {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public AccountWorkout() {}
+    public UserWorkout() {}
 
     public Id getId() {
         return id;
@@ -79,12 +79,12 @@ public class AccountWorkout {
         this.workout = workout;
     }
 
-    public Account getAccount() {
-        return account;
+    public User getUser() {
+        return user;
     }
 
-    public void setAccount(Account account) {
-        this.account = account;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -114,7 +114,7 @@ public class AccountWorkout {
     public static class Builder {
         private Id id;
         private Workout workout;
-        private Account account;
+        private User user;
         private WorkoutAccessType accessType;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
@@ -130,8 +130,8 @@ public class AccountWorkout {
             return this;
         }
 
-        public Builder account(Account account) {
-            this.account = account;
+        public Builder user(User user) {
+            this.user = user;
             return this;
         }
 
@@ -150,15 +150,15 @@ public class AccountWorkout {
             return this;
         }
 
-        public AccountWorkout build() {
-            AccountWorkout accountWorkout = new AccountWorkout();
-            accountWorkout.id = this.id;
-            accountWorkout.workout = this.workout;
-            accountWorkout.account = this.account;
-            accountWorkout.accessType = this.accessType;
-            accountWorkout.createdAt = this.createdAt;
-            accountWorkout.updatedAt = this.updatedAt;
-            return accountWorkout;
+        public UserWorkout build() {
+            UserWorkout userWorkout = new UserWorkout();
+            userWorkout.id = this.id;
+            userWorkout.workout = this.workout;
+            userWorkout.user = this.user;
+            userWorkout.accessType = this.accessType;
+            userWorkout.createdAt = this.createdAt;
+            userWorkout.updatedAt = this.updatedAt;
+            return userWorkout;
         }
     }
 

@@ -4,12 +4,12 @@ import GymApp.dto.membership.CreateMembershipRequest;
 import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.dto.membership.GetMembershipsResponse;
 import GymApp.dto.membership.MembershipDto;
-import GymApp.entity.Account;
+import GymApp.entity.User;
 import GymApp.entity.Membership;
 import GymApp.exception.NotFoundException;
 import GymApp.security.SecurityConfig;
 import GymApp.security.authenticationProvider.AccountAuthenticationProviderService;
-import GymApp.service.Intrface.AccountService;
+import GymApp.service.Intrface.UserService;
 import GymApp.service.Intrface.CurrentUserService;
 import GymApp.service.Intrface.MembershipService;
 
@@ -60,7 +60,7 @@ public class MembershipControllerTest {
     @MockBean
     private MembershipService membershipService;
     @MockBean
-    private AccountService accountService;
+    private UserService userService;
 
     @MockBean
     private CurrentUserService currentUserService;
@@ -168,10 +168,10 @@ public class MembershipControllerTest {
         ));
 
         // Mock AccountService
-        when(accountService.hasAccessOnBranch(any(), any())).thenReturn(true);
+        when(userService.hasAccessOnBranch(any(), any())).thenReturn(true);
 
         // Mock CurrentUserService
-        when(currentUserService.getCurrentUser()).thenReturn(new Account.Builder().id(1).build());
+        when(currentUserService.getCurrentUser()).thenReturn(new User.Builder().id(1).build());
 
 
         // Act & Assert
@@ -208,10 +208,10 @@ public class MembershipControllerTest {
         ));
 
         // Mock AccountService ( hasAccessOnBranch method )
-        when(accountService.hasAccessOnBranch(any(), any())).thenThrow(new NotFoundException(""));
+        when(userService.hasAccessOnBranch(any(), any())).thenThrow(new NotFoundException(""));
 
         // Mock CurrentUserService ( getCurrentUser method )
-        when(currentUserService.getCurrentUser()).thenReturn(new Account.Builder().id(1).build());
+        when(currentUserService.getCurrentUser()).thenReturn(new User.Builder().id(1).build());
 
         // Act & Assert
         mockMvc
@@ -254,10 +254,10 @@ public class MembershipControllerTest {
         ));
 
         // Mock AccountService ( hasAccessOnBranch method )
-        when(accountService.hasAccessOnBranch(any(), any())).thenThrow(new NotFoundException(""));
+        when(userService.hasAccessOnBranch(any(), any())).thenThrow(new NotFoundException(""));
 
         // Mock CurrentUserService ( getCurrentUser method )
-        when(currentUserService.getCurrentUser()).thenReturn(new Account.Builder().id(1).build());
+        when(currentUserService.getCurrentUser()).thenReturn(new User.Builder().id(1).build());
 
 
         // Act & Assert
@@ -298,10 +298,10 @@ public class MembershipControllerTest {
         ));
 
         // Mock AccountService ( hasAccessOnBranch method )
-        when(accountService.hasAccessOnBranch(any(), any())).thenThrow(new NotFoundException(""));
+        when(userService.hasAccessOnBranch(any(), any())).thenThrow(new NotFoundException(""));
 
         // Mock CurrentUserService ( getCurrentUser method )
-        when(currentUserService.getCurrentUser()).thenReturn(new Account.Builder().id(1).build());
+        when(currentUserService.getCurrentUser()).thenReturn(new User.Builder().id(1).build());
 
 
         // Act & Assert
@@ -330,7 +330,7 @@ public class MembershipControllerTest {
         when(membershipService.getMembershipById(1L)).thenReturn(membershipDto);
 
         // Mock AccountService ( hasAccessOnBranch method )
-        when(accountService.hasAccessOnBranch(
+        when(userService.hasAccessOnBranch(
                 membership.getCreatedBy().getId(),
                 membership.getBranch().getId()
         )).thenReturn(true);
@@ -383,7 +383,7 @@ public class MembershipControllerTest {
                 "Couldn't find membership with Id: " + membership.getId()));
 
         // Mock AccountService ( hasAccessOnBranch method )
-        when(accountService.hasAccessOnBranch(
+        when(userService.hasAccessOnBranch(
                 membership.getCreatedBy().getId(),
                 membership.getBranch().getId()
         )).thenReturn(true);

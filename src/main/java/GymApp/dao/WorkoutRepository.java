@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface WorkoutRepository extends JpaRepository<Workout, Long> {
 
-    List<Workout> findByAccountWorkouts_Id_AccountId(long id);
+    List<Workout> findByUserWorkouts_Id_UserId(long id);
 }

@@ -3,12 +3,12 @@ package GymApp.controller;
 
 import GymApp.dao.RoleRepository;
 import GymApp.dto.AccountProfileDto;
-import GymApp.entity.Account;
+import GymApp.entity.User;
 import GymApp.entity.Role;
 import GymApp.entity.UserRole;
 import GymApp.enums.Roles;
-import GymApp.service.Intrface.AccountService;
-import GymApp.util.entityAndDtoMappers.AccountMapper;
+import GymApp.service.Intrface.UserService;
+import GymApp.util.entityAndDtoMappers.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,13 +28,13 @@ public class InitController {
       and it will handle the creation of owner account, so you can use the application.
     * */
     @Autowired
-    private final AccountService accountService;
+    private final UserService userService;
 
     @Autowired
     private final RoleRepository roleRepository;
 
-    public InitController(AccountService accountService, RoleRepository roleRepository) {
-        this.accountService = accountService;
+    public InitController(UserService userService, RoleRepository roleRepository) {
+        this.userService = userService;
         this.roleRepository = roleRepository;
     }
 
@@ -52,26 +52,26 @@ public class InitController {
 
         this.roleRepository.saveAll(roles);
 
-        Account.Builder accountBuilder = new Account.Builder();
+        User.Builder accountBuilder = new User.Builder();
 
         // BCrypt password for raw password "123"
         String bCryptPassword = "$2a$12$fdQCjXHktjZczz5hlHg77u8bIXUQdzGQf5k7ulN.cxzhW2vidHzSu";
 
         // save the account_id in the owner table
 
-        Account account = accountBuilder
+        User user = accountBuilder
                 .firstName("f1")
                 .secondName("s1")
                 .thirdName("t1")
                 .email("e1@gmail.com")
                 .phoneNumber("1")
                 .password(bCryptPassword).build();
-        UserRole userRoleLink = new UserRole(account, roleRepository.findRoleByName(Roles.ADMIN).orElseThrow());
-        account.setRoles(Set.of(userRoleLink));
-        account = accountService.save(account);
+        UserRole userRoleLink = new UserRole(user, roleRepository.findByName(Roles.ADMIN).orElseThrow());
+        user.setRoles(Set.of(userRoleLink));
+        user = userService.save(user);
 
         // return the account profile dto (without password).
-        return AccountMapper.accountEntityToAccountProfileDto(account);
+        return UserMapper.accountEntityToAccountProfileDto(user);
     }
 
 }

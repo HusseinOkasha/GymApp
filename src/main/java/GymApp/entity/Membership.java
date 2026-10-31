@@ -39,7 +39,7 @@ public class Membership {
 
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)
-    private Account client;
+    private User client;
 
     @ManyToOne
     @JoinColumn(name = "branch_id", nullable = false)
@@ -47,7 +47,7 @@ public class Membership {
 
     @JoinColumn(name = "created_by", nullable = false)
     @ManyToOne
-    private Account createdBy;
+    private User createdBy;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
@@ -62,9 +62,9 @@ public class Membership {
             LocalDate endDate,
             boolean isActive,
             MembershipType type,
-            Account client,
+            User client,
             Branch branch,
-            Account createdBy,
+            User createdBy,
             LocalDateTime createdAt
     ) {
         this.id = id;
@@ -118,11 +118,11 @@ public class Membership {
         this.type = type;
     }
 
-    public Account getClient() {
+    public User getClient() {
         return client;
     }
 
-    public void setClient(Account client) {
+    public void setClient(User client) {
         this.client = client;
     }
 
@@ -142,11 +142,11 @@ public class Membership {
         this.createdAt = createdAt;
     }
 
-    public Account getCreatedBy() {
+    public User getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(Account createdBy) {
+    public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
 
@@ -212,9 +212,9 @@ public class Membership {
         private LocalDate endDate;
         private boolean isActive;
         private MembershipType type;
-        private Account client;
+        private User client;
         private Branch branch;
-        private Account createdBy;
+        private User createdBy;
         private LocalDateTime createdAt;
 
         public Builder() {
@@ -245,7 +245,7 @@ public class Membership {
             return this;
         }
 
-        public Builder client(Account client) {
+        public Builder client(User client) {
             this.client = client;
             return this;
         }
@@ -255,7 +255,7 @@ public class Membership {
             return this;
         }
 
-        public Builder createdBy(Account createdBy) {
+        public Builder createdBy(User createdBy) {
             this.createdBy = createdBy;
             return this;
         }

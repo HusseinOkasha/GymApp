@@ -8,7 +8,7 @@ It's the backend of GYM management app.
   * Running this command will clone the GymApp repo from gitHub.
   * It will create 2 containers one for the GymApp and the other for postgreSQL.
   * The Gym app will be running on port 8080.
-* Send post request to the init controller, which will create owner account, so you can try different features.
+* Send post request to the init controller, which will create owner user, so you can try different features.
   * `curl -X POST http://localhost:8080/api/init`
 ## User Guide
 It contains curl commands trying different features in the project [User Guide](https://thin-move-11a.notion.site/User-Guide-6338255eefbc4362b5c952132c801622#c58b835e7c9d457db8a09a47e562e404)
@@ -31,63 +31,63 @@ It contains curl commands trying different features in the project [User Guide](
 
 
 ### Owner Account Manager
-* Owner can CREATE owner account through
-  * `POST http://localhost:8080/api/owner-account-manager`
+* Owner can CREATE owner user through
+  * `POST http://localhost:8080/api/owner-user-manager`
 
-* Owner can get his account details through
-  * `GET http://localhost:8080/api/owner-account-manager`
+* Owner can get his user details through
+  * `GET http://localhost:8080/api/owner-user-manager`
 
 * Owner can list all owner accounts through
-  * `GET http://localhost:8080/api/owner-account-manager/all`
+  * `GET http://localhost:8080/api/owner-user-manager/all`
 
-* Owner can update his account through
-  * `PUT http://localhost:8080/api/owner-account-manager`
+* Owner can update his user through
+  * `PUT http://localhost:8080/api/owner-user-manager`
 
-* Owner can change his account password through
-  * `PUT "http://localhost:8080/api/owner-account-manager/password`
+* Owner can change his user password through
+  * `PUT "http://localhost:8080/api/owner-user-manager/password`
 
-* Owner can Delete his own account through
-  * `DELETE http://localhost:8080/api/owner-account-manager`
+* Owner can Delete his own user through
+  * `DELETE http://localhost:8080/api/owner-user-manager`
 
 
 ### Coach Account Manager
-* **Owner** can create coach account through
-  * `POST http://localhost:8080/api/coach-account-manager`
+* **Owner** can create coach user through
+  * `POST http://localhost:8080/api/coach-user-manager`
 
-* **Coach** can get his account details through
-  * `GET  http://localhost:8080/api/coach-account-manager`
+* **Coach** can get his user details through
+  * `GET  http://localhost:8080/api/coach-user-manager`
 
 * **Owner** can get list of all coaches through
-  * `GET http://localhost:8080/api/coach-account-manager/coaches`
+  * `GET http://localhost:8080/api/coach-user-manager/coaches`
 
 * **Coach** can update his own profile through
-  * `PUT http://localhost:8080/api/coach-account-manager`
+  * `PUT http://localhost:8080/api/coach-user-manager`
 
-* **Coach** can change his account password through
-  * `PUT http://localhost:8080/api/coach-account-manager/password`
+* **Coach** can change his user password through
+  * `PUT http://localhost:8080/api/coach-user-manager/password`
 
-* **Owner** can delete coach account through
-  * `DELETE http://localhost:8080/api/coach-account-manager`
+* **Owner** can delete coach user through
+  * `DELETE http://localhost:8080/api/coach-user-manager`
 
 
 ### Client Account Manager
-* **Owner** can create new client account through
-  * `POST http://localhost:8080/api/client-account-manager`
+* **Owner** can create new client user through
+  * `POST http://localhost:8080/api/client-user-manager`
 
-* **Client** can get his account details through
-  * `GET http://localhost:8080/api/client-account-manager`
+* **Client** can get his user details through
+  * `GET http://localhost:8080/api/client-user-manager`
     
 * **Owner / Coach** can get list of all clients through
-  * `GET http://localhost:8080/api/client-account-manager/clients`
+  * `GET http://localhost:8080/api/client-user-manager/clients`
     
-* **Client** can update his account details through
-  * `PUT http://localhost:8080/api/client-account-manager`
+* **Client** can update his user details through
+  * `PUT http://localhost:8080/api/client-user-manager`
     
 * **Client** can change his password through
-  * `PUT http://localhost:8080/api/client-account-manager/password`
+  * `PUT http://localhost:8080/api/client-user-manager/password`
    
-* **Owner** can delete client account through
-  * `Delete http://localhost:8080/api/client-account-manager`
+* **Owner** can delete client user through
+  * `Delete http://localhost:8080/api/client-user-manager`
 
 ### Workout Controller
 Owner, coach, and client can CRUD their own workouts.

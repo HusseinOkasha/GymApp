@@ -1,7 +1,7 @@
 package GymApp.service;
 
 import GymApp.dao.AccountRepository;
-import GymApp.entity.Account;
+import GymApp.entity.User;
 import GymApp.exception.NotFoundException;
 import GymApp.service.Intrface.CurrentUserService;
 import org.springframework.security.core.Authentication;
@@ -17,7 +17,7 @@ public class CurrentUserServiceImpl implements CurrentUserService {
     }
 
 
-    public Account getCurrentUser() {
+    public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             throw new RuntimeException("No authenticated user");

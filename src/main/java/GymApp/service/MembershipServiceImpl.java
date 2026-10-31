@@ -5,11 +5,11 @@ import GymApp.dto.membership.CreateMembershipRequest;
 import GymApp.dto.membership.CreateMembershipResponse;
 import GymApp.dto.membership.GetMembershipsResponse;
 import GymApp.dto.membership.MembershipDto;
-import GymApp.entity.Account;
+import GymApp.entity.User;
 import GymApp.entity.Branch;
 import GymApp.entity.Membership;
 import GymApp.exception.NotFoundException;
-import GymApp.service.Intrface.AccountService;
+import GymApp.service.Intrface.UserService;
 import GymApp.service.Intrface.BranchService;
 import GymApp.service.Intrface.CurrentUserService;
 import GymApp.service.Intrface.MembershipService;
@@ -23,18 +23,18 @@ import org.springframework.stereotype.Service;
 public class MembershipServiceImpl implements MembershipService {
 
     private final MembershipRepository membershipRepository;
-    private final AccountService accountService;
+    private final UserService userService;
     private final CurrentUserService currentUserService;
     private final BranchService branchService;
 
     public MembershipServiceImpl(
             MembershipRepository membershipRepository,
-            AccountService accountService,
+            UserService userService,
             CurrentUserService currentUserService,
             BranchService branchService
     ) {
         this.membershipRepository = membershipRepository;
-        this.accountService = accountService;
+        this.userService = userService;
         this.currentUserService = currentUserService;
         this.branchService = branchService;
     }
@@ -42,7 +42,7 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     public CreateMembershipResponse createMembership(CreateMembershipRequest dto) {
         // Check that the current user (EMPLOYEE / Admin) has access on the branch
-        accountService.hasAccessOnBranch(
+        userService.hasAccessOnBranch(
                 currentUserService.getCurrentUser().getId(),
                 dto.branchId()
         );
@@ -56,11 +56,11 @@ public class MembershipServiceImpl implements MembershipService {
 
 
         // Set client for membership.
-        Account account = accountService.findById(dto.clientId());
-        membership.setClient(account);
+        User user = userService.findById(dto.clientId());
+        membership.setClient(user);
 
         // Set Creator for the membership.
-        Account creator = currentUserService.getCurrentUser();
+        User creator = currentUserService.getCurrentUser();
         membership.setCreatedBy(creator);
 
         // Set branch for membership

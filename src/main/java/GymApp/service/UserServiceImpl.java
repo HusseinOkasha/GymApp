@@ -2,10 +2,10 @@ package GymApp.service;
 
 import GymApp.dao.AccountRepository;
 import GymApp.dao.UserBranchRepository;
-import GymApp.entity.Account;
+import GymApp.entity.User;
 import GymApp.entity.UserBranch;
 import GymApp.exception.NotFoundException;
-import GymApp.service.Intrface.AccountService;
+import GymApp.service.Intrface.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,12 +13,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class AccountServiceImpl implements AccountService {
+public class UserServiceImpl implements UserService {
     @Autowired
     private final AccountRepository accountRepository;
     private final UserBranchRepository userBranchRepository;
 
-    public AccountServiceImpl(
+    public UserServiceImpl(
             AccountRepository accountRepository,
             UserBranchRepository userBranchRepository
     ) {
@@ -27,12 +27,12 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public List<Account> findAll() {
+    public List<User> findAll() {
         return accountRepository.findAll();
     }
 
     @Override
-    public Account findById(long id) {
+    public User findById(long id) {
         return accountRepository
                 .findById(id)
                 .orElseThrow(() -> new NotFoundException("Couldn't find Account with Id: " +
@@ -40,7 +40,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Account findByEmail(String email) {
+    public User findByEmail(String email) {
         return accountRepository
                 .findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("Couldn't find Account with " +
@@ -49,18 +49,18 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Optional<Account> findByPhoneNumber(String phoneNumber) {
+    public Optional<User> findByPhoneNumber(String phoneNumber) {
         return accountRepository.findByPhoneNumber(phoneNumber);
     }
 
     @Override
-    public Optional<Account> findByEmailOrPhoneNumber(String email, String phoneNumber) {
+    public Optional<User> findByEmailOrPhoneNumber(String email, String phoneNumber) {
         return accountRepository.findByEmailOrPhoneNumber(email, phoneNumber);
     }
 
     @Override
-    public Account save(Account account) {
-        return accountRepository.save(account);
+    public User save(User user) {
+        return accountRepository.save(user);
     }
 
     @Override

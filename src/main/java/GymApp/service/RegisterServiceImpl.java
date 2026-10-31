@@ -1,31 +1,36 @@
 package GymApp.service;
 
 import GymApp.dto.RegisterDto;
-import GymApp.entity.Account;
+import GymApp.entity.User;
 import GymApp.entity.UserRole;
-import GymApp.service.Intrface.AccountService;
+import GymApp.service.Intrface.UserService;
 import GymApp.service.Intrface.RegisterService;
 import GymApp.service.Intrface.RoleService;
-import GymApp.util.entityAndDtoMappers.MapStruct.AccountMapper;
+import GymApp.util.entityAndDtoMappers.MapStruct.UserMapper;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 
 
 import java.util.Set;
 
+@Service
 public class RegisterServiceImpl implements RegisterService {
     private final RoleService roleServiceImpl;
-    private final AccountService accountServiceImpl;
-    private final AccountMapper accountMapper;
-    public RegisterServiceImpl(RoleService roleServiceImpl, AccountService accountServiceImpl,
-                               AccountMapper accountMapper
+    private final UserService userServiceImpl;
+    private final UserMapper userMapper;
+    private final BCryptPasswordEncoder encoder;
+    public RegisterServiceImpl(RoleService roleServiceImpl, UserService userServiceImpl,
+                               UserMapper userMapper, BCryptPasswordEncoder encoder
     ) {
         this.roleServiceImpl = roleServiceImpl;
-        this.accountServiceImpl = accountServiceImpl;
-        this.accountMapper = accountMapper;
+        this.userServiceImpl = userServiceImpl;
+        this.userMapper = userMapper;
+        this.encoder = encoder;
     }
 
-    public Account register(RegisterDto dto){
+    public User register(RegisterDto dto){
         // Map RegisterDto to Account object
-        Account account = accountMapper.toEntity(dto);
+        User user = userMapper.toEntity(dto);
 
         // Assign Branches to the account
         //        List<Branch> branches = branchService.findAllByIds(dto.branches());
@@ -42,12 +47,13 @@ public class RegisterServiceImpl implements RegisterService {
 
         // Assign role to the account.
         UserRole userRole = new UserRole(
-                account,
-                roleServiceImpl.findByName(dto.role().toString())
+                user,
+                roleServiceImpl.findByName(dto.role())
         );
-        account.setRoles(Set.of(userRole));
-
+        user.setRoles(Set.of(userRole));
+        // Default password
+        user.setPassword(encoder.encode("123"));
         // save the account to the database
-        return accountServiceImpl.save(account);
+        return userServiceImpl.save(user);
     }
 }

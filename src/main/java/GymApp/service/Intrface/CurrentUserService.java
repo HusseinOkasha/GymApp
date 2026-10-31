@@ -1,8 +1,8 @@
 package GymApp.service.Intrface;
 
-import GymApp.entity.Account;
+import GymApp.entity.User;
 
 public interface CurrentUserService {
-    Account getCurrentUser();
+    User getCurrentUser();
 }
 

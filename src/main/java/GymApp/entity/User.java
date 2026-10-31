@@ -8,10 +8,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "account", uniqueConstraints = {
+@Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = "email"), @UniqueConstraint(columnNames = "phone_number")
 })
-public class Account {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id")
@@ -33,16 +33,16 @@ public class Account {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "account", cascade = CascadeType.REMOVE)
-    private Set<AccountWorkout> accountWorkouts = new HashSet<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private Set<UserWorkout> userWorkouts = new HashSet<>();
 
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserRole> roles = new HashSet<>();
 
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserBranch> branches = new HashSet<>();
 
-    public Account() {
+    public User() {
     }
 
     public Set<UserRole> getRoles() {
@@ -123,12 +123,12 @@ public class Account {
         this.updatedAt = updatedAt;
     }
 
-    public Set<AccountWorkout> getAccountWorkouts() {
-        return accountWorkouts;
+    public Set<UserWorkout> getUserWorkouts() {
+        return userWorkouts;
     }
 
-    public void setAccountWorkouts(Set<AccountWorkout> accountWorkouts) {
-        this.accountWorkouts = accountWorkouts;
+    public void setUserWorkouts(Set<UserWorkout> userWorkouts) {
+        this.userWorkouts = userWorkouts;
     }
 
     public Set<UserBranch> getBranches() {
@@ -149,7 +149,7 @@ public class Account {
         private String phoneNumber;
         private String password;
         private Set<UserRole> roles;
-        private Set<AccountWorkout> accountWorkouts;
+        private Set<UserWorkout> userWorkouts;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
@@ -188,8 +188,8 @@ public class Account {
             this.roles = roles;
             return this;
         }
-        public Builder accountWorkouts(Set<AccountWorkout> accountWorkouts ){
-            this.accountWorkouts = new HashSet<>(accountWorkouts);
+        public Builder userWorkouts(Set<UserWorkout> userWorkouts){
+            this.userWorkouts = new HashSet<>(userWorkouts);
             return this;
         }
         public Builder createdAt(LocalDateTime  createdAt ){
@@ -200,32 +200,32 @@ public class Account {
             this.updatedAt = updatedAt;
             return this;
         }
-        public Builder copyFrom(Account account){
-            this.id = account.id;
-            this.firstName = account.firstName;
-            this.secondName = account.secondName;
-            this.thirdName = account.thirdName;
-            this.email = account.email;
-            this.phoneNumber = account.phoneNumber;
-            this.password = account.password;
-            this.updatedAt = account.updatedAt;
-            this.createdAt = account.createdAt;
+        public Builder copyFrom(User user){
+            this.id = user.id;
+            this.firstName = user.firstName;
+            this.secondName = user.secondName;
+            this.thirdName = user.thirdName;
+            this.email = user.email;
+            this.phoneNumber = user.phoneNumber;
+            this.password = user.password;
+            this.updatedAt = user.updatedAt;
+            this.createdAt = user.createdAt;
             return this;
         }
-        public Account build(){
-            Account account = new Account();
-            account.id = this.id;
-            account.firstName = this.firstName;
-            account.secondName = this.secondName;
-            account.thirdName = this.thirdName;
-            account.email = this.email;
-            account.phoneNumber = this.phoneNumber;
-            account.password = this.password;
-            account.roles = this.roles;
-            account.accountWorkouts = this.accountWorkouts;
-            account.createdAt = this.createdAt;
-            account.updatedAt = this.updatedAt;
-            return account;
+        public User build(){
+            User user = new User();
+            user.id = this.id;
+            user.firstName = this.firstName;
+            user.secondName = this.secondName;
+            user.thirdName = this.thirdName;
+            user.email = this.email;
+            user.phoneNumber = this.phoneNumber;
+            user.password = this.password;
+            user.roles = this.roles;
+            user.userWorkouts = this.userWorkouts;
+            user.createdAt = this.createdAt;
+            user.updatedAt = this.updatedAt;
+            return user;
         }
 
     }
@@ -243,7 +243,7 @@ public class Account {
 
     @Override
     public String toString() {
-        return "Account{" +
+        return "User{" +
                 "firstName='" + firstName + '\'' +
                 ", secondName='" + secondName + '\'' +
                 ", thirdName='" + thirdName + '\'' +

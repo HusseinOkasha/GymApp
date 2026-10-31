@@ -1,9 +1,9 @@
 package GymApp.service.Intrface;
 
 import GymApp.dto.RegisterDto;
-import GymApp.entity.Account;
+import GymApp.entity.User;
 
 public interface RegisterService {
 
-    Account register(RegisterDto dto);
+    User register(RegisterDto dto);
 }
