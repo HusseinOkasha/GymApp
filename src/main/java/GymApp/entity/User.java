@@ -13,7 +13,12 @@ import java.util.Set;
 })
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq_generator")
+    @SequenceGenerator(
+            name = "user_seq_generator",       // The logical name used inside Hibernate
+            sequenceName = "users_seq",        // The physical sequence name in your database
+            allocationSize = 1                 // Adjust based on your DB sequence increment
+            )
     @Column(name = "id")
     private long id;
     @Column(name = "first_name", nullable = false)

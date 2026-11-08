@@ -1,0 +1,19 @@
+databaseChangeLog:
+  -  changeSet:
+       id:  createSequence-example
+       author:  HusseinOkasha
+       changes:
+         -  createSequence:
+              cacheSize:  20
+              dataType:  bigint
+              incrementBy:  1
+              schemaName:  public
+              sequenceName:  users_seq
+              startValue:  1
+         - createSequence:
+               cacheSize: 20
+               dataType: bigint
+               incrementBy: 1
+               schemaName: public
+               sequenceName: role_seq
+               startValue: 1
